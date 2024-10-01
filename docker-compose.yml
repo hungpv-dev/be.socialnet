@@ -1,0 +1,92 @@
+version: '3'
+
+services:
+  server:
+    build: 
+      args: 
+        user: hungpv
+        uid: 1000
+      context: ./
+      dockerfile: Dockerfile
+    image: server
+    container_name: server
+    restart: unless-stopped
+    depends_on:
+      - database
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+    networks:
+      - socielnet
+  
+  webserver:
+    image: nginx:alpine
+    container_name: webserver
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - 8000:80
+    volumes:
+      - ./:/var/www
+      - ./.docker/nginx:/etc/nginx/conf.d
+    networks:
+      - socielnet
+
+  database:
+    image: mysql:5.7.22
+    container_name: database
+    restart: unless-stopped
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=hungpv
+      - MYSQL_DATABASE=socielnet
+      - MYSQL_USER=hungpv
+      - MYSQL_PASSWORD=hungpv
+    volumes:
+      - ./.docker/data/db:/var/lib/mysql
+    networks:
+      - socielnet
+
+  phpmyadmin:
+    image: phpmyadmin:5.2.1-apache
+    container_name: phpmyadmin
+    restart: unless-stopped
+    depends_on:
+      - database
+    ports:
+      - 8080:80
+    environment:
+      - PMA_HOST=database
+      - PMA_PORT=3306
+      - PMA_USER=root
+      - PMA_PASSWORD=hungpv
+    networks:
+      - socielnet
+
+  laravel_echo_server:
+    container_name: laravel_echo_server
+    build:
+      context: ./.docker/laravel-echo-server
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    volumes:  
+      - .env:/var/www/.env
+    networks:
+      - socielnet
+
+  redis: 
+    image: redis:7.2-alpine
+    container_name: redis
+    restart: unless-stopped
+    volumes:
+      - ./.docker/data/redis:/data
+    ports:
+      - 6379:6379
+    networks:
+      - socielnet
+
+networks:
+  socielnet: 
+    driver: bridge
