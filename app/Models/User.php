@@ -34,4 +34,37 @@ class User extends Authenticatable
     public function findForPassport($username){
         return $this->where('email',$username)->orWhere('phone',$username)->first();
     }
+
+    public function posts(){
+        return $this->hasMany(Post::class);
+    }
+
+    public function comments(){
+        return $this->hasMany(Comment::class);
+    }
+
+    public function emotions(){
+        return $this->morphMany(Emotion::class,'emotionable');
+    }
+
+    public function user_stories(){
+        return $this->hasMany(UserStories::class);
+    }
+
+    public function stories(){
+        return $this->hasMany(Story::class);
+    }
+    
+    public function reports(){
+        return $this->hasMany(Report::class);
+    }
+    
+    public function blocks(){
+        return $this->belongsToMany(User::class,'blocks','user_block','user_is_blocked');
+    }
+
+    public function friends(){
+        return $this->belongsToMany(User::class,'friends','user1','user2');
+    }
+
 }

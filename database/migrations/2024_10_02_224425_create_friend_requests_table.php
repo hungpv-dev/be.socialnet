@@ -11,13 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('reports', function (Blueprint $table) {
+        Schema::create('friend_requests', function (Blueprint $table) {
             $table->id();
-            $table->morphs('reporttable');
-            $table->unsignedBigInteger('user_id');
-            $table->text('content');
-            $table->tinyInteger('status')->default(1);
-            $table->timestamps();
+            $table->foreignId('sender')->references('id')->on('users');
+            $table->foreignId('receiver')->references('id')->on('users');
+            $table->timestamp('created_at');
         });
     }
 
@@ -26,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('reports');
+        Schema::dropIfExists('friend_requests');
     }
 };

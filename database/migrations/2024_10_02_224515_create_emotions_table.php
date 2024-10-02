@@ -11,11 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('comment_emotions', function (Blueprint $table) {
+        Schema::create('emotions', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('comment_id');
-            $table->unsignedBigInteger('user_id');
-            $table->string('emotion');
+            $table->foreignId('user_id')->references('id')->on('users');
+            $table->morphs('emotionable');
+            $table->string('emoji');
+            $table->timestamp('created_at');
         });
     }
 
@@ -24,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('comment_emotions');
+        Schema::dropIfExists('emotions');
     }
 };

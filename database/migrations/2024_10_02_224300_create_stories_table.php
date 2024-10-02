@@ -11,15 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('messages', function (Blueprint $table) {
+        Schema::create('stories', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('chat_room_id')->references('id')->on('chat_rooms');
-            $table->text('body');
-            $table->json('is_seen')->nullable();
-            $table->json('flagged')->nullable();
-            $table->json('files')->nullable();
-            $table->foreignId('reply_to')->nullable()->references('id')->on('messages');
             $table->foreignId('user_id')->references('id')->on('users');
+            $table->json('file')->comment('Ảnh, video, chữ');
+            $table->enum('status', ['public', 'friend', 'private'])->default('friend');
+            $table->integer('user_count')->default(0);
             $table->timestamp('created_at');
         });
     }
@@ -29,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('messages');
+        Schema::dropIfExists('stories');
     }
 };
