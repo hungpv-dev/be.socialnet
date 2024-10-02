@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('user_stories', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('story_id');
-            $table->unsignedBigInteger('user_id');
-            $table->string('emoticon');
-            $table->boolean('seen')->default(false);
+            $table->foreignId('story_id')->references('id')->on('stories');
+            $table->string('emoji')->nullable();
+            $table->foreignId('user_id')->references('id')->on('users');
+            $table->boolean('seen')->default(false)->comment('1: Đã xem, 0: Chưa xem');
         });
     }
 

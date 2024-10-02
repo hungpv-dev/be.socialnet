@@ -11,13 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('stories', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('user_id');
-            $table->string('file');
-            $table->integer('user_count');
-            $table->softDeletes();
-            $table->timestamps();
+        Schema::create('blocks', function (Blueprint $table) {
+            $table->foreignId('user_block')->references('id')->on('users');
+            $table->foreignId('user_is_blocked')->references('id')->on('users');
+            $table->timestamp('created_at');
         });
     }
 
@@ -26,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('stories');
+        Schema::dropIfExists('blocks');
     }
 };

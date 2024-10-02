@@ -22,8 +22,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 Route::get('/user', function () {
-    // Redis::set('test_key', 'Hello, Redis!');
-    return Redis::get('test_key');
+    User::all();
+    // // Redis::set('test_key', 'Hello, Redis!');
+    // return Redis::get('test_key');
 });
 
 Route::get('/test', function () {

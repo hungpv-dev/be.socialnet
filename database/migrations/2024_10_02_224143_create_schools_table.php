@@ -11,12 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('friends', function (Blueprint $table) {
+        Schema::create('schools', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('from_user');
-            $table->unsignedBigInteger('to_user');
-            $table->boolean('user_id')->default(false);
-            $table->timestamps();
+            $table->string(column: 'name', length: 100);
         });
     }
 
@@ -25,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('friends');
+        Schema::dropIfExists('schools');
     }
 };
