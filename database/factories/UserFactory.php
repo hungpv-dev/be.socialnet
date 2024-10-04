@@ -32,7 +32,6 @@ class UserFactory extends Factory
             'password' => Hash::make('password'),
             'is_online' => $this->faker->boolean(),
             'is_active' => $this->faker->boolean(),
-            'remember_token' => Str::random(10),
         ];
     }
 

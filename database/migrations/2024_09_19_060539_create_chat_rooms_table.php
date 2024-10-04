@@ -18,8 +18,8 @@ return new class extends Migration
             $table->json('name');
             $table->json('user')->nullable();
             $table->json('admin')->nullable();
-            $table->json('last_remove')->nullable();
-            $table->json('last_active');
+            $table->json('last_remove')->nullable()->comment('Thời điểm user rời khỏi đoạn chat');
+            $table->json('last_active')->comment('Thời điểm user truy cập đoạn đoạn chat');
             $table->timestamp('created_at');
         });
     }
