@@ -12,8 +12,12 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('register',[RegisterController::class,'register']);
 
-Route::middleware('auth:api')->group(function(){
+Route::middleware(['auth:api'])->group(function(){
     
+    Route::post('/broadcasting/auth',function(Request $request){
+        return true;
+    });
+
     Route::get('/user', function (Request $request) {
         return $request->user();
     });

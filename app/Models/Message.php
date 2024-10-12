@@ -15,6 +15,7 @@ class Message extends Model
         "user_id",
         "flagged",
         "files",
+        "created_at",
         "reply_to"
     ];
 
@@ -23,7 +24,7 @@ class Message extends Model
         "is_seen" => 'array',
         "flagged" => 'array',
         "files" => 'array',
-        'created_at' => 'datetime'
+        // 'created_at' => 'datetime'
     ];
 
     public function user(){
