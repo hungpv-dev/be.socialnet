@@ -30,6 +30,7 @@ Route::middleware('auth:api')->group(function () {
     Route::apiResource('/chat-room', ChatRoomController::class);
     Route::apiResource('/messages', MessageController::class);
 
+
     Route::prefix('friend/')->group(function () {
         Route::delete('remove', [FriendController::class, 'removeFriend']);
         Route::get('list', [FriendController::class, 'getFriendList']);
@@ -48,5 +49,17 @@ Route::middleware('auth:api')->group(function () {
         Route::put('profile/update', [UserController::class, 'updateProfile']);
         Route::put('avatar/update', [UserController::class, 'updateAvatar']);
         Route::put('background/update', [UserController::class, 'updateBackground']);
+
+    Route::prefix('chat-room')->group(function(){
+        Route::get('/',[ChatRoomController::class,'index']);
+        Route::post('/',[ChatRoomController::class,'store']);
+        Route::get('/{id}',[ChatRoomController::class,'show']);
+        Route::post('/notification/{id}',[ChatRoomController::class,'notification']);
+        Route::put('/send/{id}',[ChatRoomController::class,'send']);
+    });
+
+    Route::prefix('messages')->group(function(){
+        Route::get('/',[MessageController::class,'index']);
+        Route::post('/',[MessageController::class,'store']);
     });
 });
