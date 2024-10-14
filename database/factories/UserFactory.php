@@ -21,17 +21,24 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->name(),
-            'email' => $this->faker->unique()->safeEmail(),
-            'phone' => $this->faker->phoneNumber(),
+            'name' => $this->faker->name,
+            'email' => $this->faker->unique()->safeEmail,
+            'phone' => $this->faker->phoneNumber,
             'avatar' => $this->faker->imageUrl(200, 200, 'people'),
-            'cover_avatar' => $this->faker->imageUrl(800, 400, 'nature'),
-            'authentication' => null,
+            'cover_avatar' => $this->faker->imageUrl(800, 200, 'nature'),
+            'authentication' => $this->faker->randomElement([1, 2]),
             'email_verified_at' => now(),
             'time_offline' => now(),
-            'password' => Hash::make('password'),
-            'is_online' => $this->faker->boolean(),
-            'is_active' => $this->faker->boolean(),
+            'password' => Hash::make('password'), // Mật khẩu mã hóa
+            'is_online' => $this->faker->boolean,
+            'is_active' => $this->faker->boolean,
+            'address' => $this->faker->address,
+            'hometown' => $this->faker->city,
+            'gender' => $this->faker->randomElement(['male', 'female', 'other']),
+            'birthday' => $this->faker->date(),
+            'relationship' => $this->faker->randomElement(['single', 'married', 'divorced', 'widowed']),
+            'follower' => $this->faker->numberBetween(0, 1000),
+            'friend_counts' => $this->faker->numberBetween(0, 500),
         ];
     }
 
