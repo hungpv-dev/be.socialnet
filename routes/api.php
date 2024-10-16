@@ -4,13 +4,20 @@ use App\Http\Controllers\Auth\{
     LogoutController,
     RegisterController
 };
+use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\ChatRoomController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\PostController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 
 Route::post('register',[RegisterController::class,'register']);
+Route::prefix('password/')->group(function () {
+    Route::post('forgot', [ResetPasswordController::class, 'sendToken']);
+    Route::post("check/token", [ResetPasswordController::class, 'checkToken']);
+    Route::post("reset", [ResetPasswordController::class, 'resetPassword']);
+});
 
 Route::middleware('auth:api')->group(function(){
     
@@ -20,6 +27,8 @@ Route::middleware('auth:api')->group(function(){
     
     Route::post('/logout', [LogoutController::class,'logout']);
     Route::post('/logout-all-driver', [LogoutController::class,'logoutOtherFromDriver']);
+
+    Route::apiResource('/posts',PostController::class);
 
 
     Route::prefix('chat-room')->group(function(){
