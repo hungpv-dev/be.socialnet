@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\{
     RegisterController
 };
 use App\Http\Controllers\{
+    BlockController,
     ChatRoomController,
     UserController,
     FriendController,
@@ -34,6 +35,7 @@ Route::middleware('auth:api')->group(function () {
         Route::delete('remove', [FriendController::class, 'removeFriend']);
         Route::get('list', [FriendController::class, 'getFriendList']);
         Route::get('suggest', [FriendController::class, 'getSuggestFriends']);
+
         Route::prefix('request/')->group(function () {
             Route::post('add', [FriendRequestController::class, 'add']);
             Route::post('accept', [FriendRequestController::class, 'accept']);
@@ -49,4 +51,6 @@ Route::middleware('auth:api')->group(function () {
         Route::put('avatar/update', [UserController::class, 'updateAvatar']);
         Route::put('background/update', [UserController::class, 'updateBackground']);
     });
+
+    Route::resource('blocks', BlockController::class);
 });

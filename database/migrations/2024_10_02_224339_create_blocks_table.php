@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('blocks', function (Blueprint $table) {
+            $table->id();
             $table->foreignId('user_block')->references('id')->on('users');
             $table->foreignId('user_is_blocked')->references('id')->on('users');
             $table->timestamp('created_at');
