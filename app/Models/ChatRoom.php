@@ -10,6 +10,8 @@ class ChatRoom extends Model
     use HasFactory;
     protected $table = 'chat_rooms';
 
+    public $timestamps = false;
+
     protected $fillable = [
         'chat_type_id',
         'name',
@@ -17,6 +19,8 @@ class ChatRoom extends Model
         'admin',
         'last_remove',
         'last_active',
+        'notification',
+        'blocks',
     ];
 
     protected $casts = [
@@ -25,6 +29,8 @@ class ChatRoom extends Model
         'user' => 'array',
         'last_active' => 'array',
         'last_remove' => 'array',
+        'notification' => 'array',
+        'blocks' => 'array',
     ];
 
     public function lastMessage()

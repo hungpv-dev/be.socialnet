@@ -18,6 +18,7 @@ class Message extends Model
         "reply_to"
     ];
 
+    public $timestamps = false;
     protected $casts = [
         "is_seen" => 'array',
         "flagged" => 'array',
