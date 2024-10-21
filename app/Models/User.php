@@ -15,11 +15,22 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'phone',
+        'avatar',
+        'cover_avatar',
+        'authentication',
+        'email_verified_at',
+        'time_offline',
         'password',
         'is_online',
-        'phone',
         'is_active',
-        'authenticate'
+        'address',
+        'hometown',
+        'gender',
+        'birthday',
+        'relationship',
+        'follower',
+        'friend_counts',
     ];
 
     protected $hidden = [
@@ -31,40 +42,48 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-    public function findForPassport($username){
-        return $this->where('email',$username)->orWhere('phone',$username)->first();
+    public function findForPassport($username)
+    {
+        return $this->where('email', $username)->orWhere('phone', $username)->first();
     }
 
-    public function posts(){
+    public function posts()
+    {
         return $this->hasMany(Post::class);
     }
 
-    public function comments(){
+    public function comments()
+    {
         return $this->hasMany(Comment::class);
     }
 
-    public function emotions(){
-        return $this->morphMany(Emotion::class,'emotionable');
+    public function emotions()
+    {
+        return $this->morphMany(Emotion::class, 'emotionable');
     }
 
-    public function user_stories(){
+    public function user_stories()
+    {
         return $this->hasMany(UserStories::class);
     }
 
-    public function stories(){
+    public function stories()
+    {
         return $this->hasMany(Story::class);
     }
-    
-    public function reports(){
+
+    public function reports()
+    {
         return $this->hasMany(Report::class);
     }
-    
-    public function blocks(){
-        return $this->belongsToMany(User::class,'blocks','user_block','user_is_blocked');
+
+    public function blocks()
+    {
+        return $this->belongsToMany(User::class, 'blocks', 'user_block', 'user_is_blocked');
     }
 
-    public function friends(){
-        return $this->belongsToMany(User::class,'friends','user1','user2');
+    public function friends()
+    {
+        return $this->belongsToMany(User::class, 'friends', 'user1', 'user2');
     }
-
 }

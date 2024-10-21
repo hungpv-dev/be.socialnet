@@ -20,7 +20,7 @@ return new class extends Migration
             $table->json('files')->nullable();
             $table->foreignId('reply_to')->nullable()->references('id')->on('messages');
             $table->foreignId('user_id')->references('id')->on('users');
-            $table->timestamp('created_at');
+            $table->dateTime('created_at');
         });
     }
 
