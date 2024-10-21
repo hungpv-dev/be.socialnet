@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class Block extends Model
 {
     use HasFactory;
-
     protected $table = 'blocks';
     public $timestamps = false;
     protected $fillable = ['user_block', 'user_is_blocked', 'created_at'];

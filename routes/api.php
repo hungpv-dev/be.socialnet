@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\{
     RegisterController
 };
 use App\Http\Controllers\{
+    BlockController,
     ChatRoomController,
     UserController,
     FriendController,
@@ -47,10 +48,12 @@ Route::middleware('auth:api')->group(function () {
     });
 
 
+
     Route::prefix('friend/')->group(function () {
         Route::delete('remove', [FriendController::class, 'removeFriend']);
         Route::get('list', [FriendController::class, 'getFriendList']);
         Route::get('suggest', [FriendController::class, 'getSuggestFriends']);
+
         Route::prefix('request/')->group(function () {
             Route::post('add', [FriendRequestController::class, 'add']);
             Route::post('accept', [FriendRequestController::class, 'accept']);
@@ -66,4 +69,19 @@ Route::middleware('auth:api')->group(function () {
         Route::put('avatar/update', [UserController::class, 'updateAvatar']);
         Route::put('background/update', [UserController::class, 'updateBackground']);
     });
+
+    Route::prefix('chat-room')->group(function(){
+        Route::get('/',[ChatRoomController::class,'index']);
+        Route::post('/',[ChatRoomController::class,'store']);
+        Route::get('/{id}',[ChatRoomController::class,'show']);
+        Route::post('/notification/{id}',[ChatRoomController::class,'notification']);
+        Route::put('/send/{id}',[ChatRoomController::class,'send']);
+    });
+
+    Route::prefix('messages')->group(function(){
+        Route::get('/',[MessageController::class,'index']);
+        Route::post('/',[MessageController::class,'store']);
+    });
+
+    Route::resource('blocks', BlockController::class);
 });

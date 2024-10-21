@@ -102,7 +102,6 @@ class MessageRepository
             ], 404);
         }
     }
-
     public function send($id)
     {
         try {
