@@ -4,6 +4,12 @@ use App\Http\Controllers\Auth\{
     LogoutController,
     RegisterController
 };
+
+use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\ChatRoomController;
+use App\Http\Controllers\MessageController;
+use App\Http\Controllers\PostController;
+
 use App\Http\Controllers\{
     BlockController,
     ChatRoomController,
@@ -12,9 +18,18 @@ use App\Http\Controllers\{
     FriendRequestController,
     MessageController,
 };
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+
+
+Route::post('register',[RegisterController::class,'register']);
+Route::prefix('password/')->group(function () {
+    Route::post('forgot', [ResetPasswordController::class, 'sendToken']);
+    Route::post("check/token", [ResetPasswordController::class, 'checkToken']);
+    Route::post("reset", [ResetPasswordController::class, 'resetPassword']);
+});
 
 Route::post('register', [RegisterController::class, 'register']);
 
@@ -24,9 +39,14 @@ Route::middleware('auth:api')->group(function () {
         return true;
     });
 
+
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+
+
+    Route::apiResource('/posts',PostController::class);
+
 
     Route::post('/logout', [LogoutController::class, 'logout']);
     Route::post('/logout-all-driver', [LogoutController::class, 'logoutOtherFromDriver']);
@@ -68,19 +88,6 @@ Route::middleware('auth:api')->group(function () {
         Route::put('profile/update', [UserController::class, 'updateProfile']);
         Route::put('avatar/update', [UserController::class, 'updateAvatar']);
         Route::put('background/update', [UserController::class, 'updateBackground']);
-    });
-
-    Route::prefix('chat-room')->group(function(){
-        Route::get('/',[ChatRoomController::class,'index']);
-        Route::post('/',[ChatRoomController::class,'store']);
-        Route::get('/{id}',[ChatRoomController::class,'show']);
-        Route::post('/notification/{id}',[ChatRoomController::class,'notification']);
-        Route::put('/send/{id}',[ChatRoomController::class,'send']);
-    });
-
-    Route::prefix('messages')->group(function(){
-        Route::get('/',[MessageController::class,'index']);
-        Route::post('/',[MessageController::class,'store']);
     });
 
     Route::resource('blocks', BlockController::class);
