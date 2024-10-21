@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Events\ChatRoom\DestroyMesssage;
 use App\Events\ChatRoom\PushMessage;
 use App\Events\ChatRoom\RefreshUsers;
 use App\Events\ChatRoom\SendMessage;
@@ -17,16 +18,18 @@ class MessageRepository
 {
     public function getMessages($request)
     {
+        $index = $request->input('index', 0);
         $user_id = Auth::id();
         try {
             $chat_room_id = $request->chat_room_id;
             $room = ChatRoom::whereJsonContains('user', 'user_' . $user_id)->findOrFail($chat_room_id);
             $messages = Message::where('chat_room_id', $room->id)
-                ->whereJsonDoesntContain('flagged', 'user_' . $user_id)
-                ->with('user:id,name,avatar,is_online', 'replyTo')
+                // ->whereJsonDoesntContain('flagged', 'user_' . $user_id)
+                ->with('user:id,name,avatar,is_online', 'replyTo','emotions:id,user_id,emotionable_id,emotionable_type,emoji') 
                 ->orderBy('id', 'desc')
-                ->simplePaginate(perPage: 20);
-            $messages->setCollection($messages->getCollection());
+                ->skip($index)
+                ->take(20)
+                ->get();
             return MessageResource::collection($messages);
         } catch (\Exception $e) {
             return response([
@@ -136,5 +139,32 @@ class MessageRepository
         return response([
             'message' => 'Xem tin nhắn thành công'
         ], 200);
+    }
+
+    public function deleteMessage($id,$request)
+    {
+        $all = $request->input('all',false);
+        try {
+            // Xóa cá nhân
+            $message = Message::findOrFail($id);
+            $chatRoom = ChatRoom::findOrFail($message->chat_room_id);
+            if($all){
+                $message->flagged = $chatRoom->user;
+                $message->save();
+                broadcast(new DestroyMesssage($chatRoom->id,$message))->toOthers();
+            }else{
+                $message->flagged = array_merge($message->flagged, ['user_' . Auth::id()]);
+                $message->save();
+            }
+            return response([
+                'data' => new MessageResource($message),
+                'message' => 'Xóa tin nhắn thành công'
+            ], 200);
+        } catch (\Exception $e) {
+            return response([
+                'message' => 'Không tìm thấy tin nhắn',
+                'error' => $e->getMessage(),
+            ], 404);
+        }
     }
 }

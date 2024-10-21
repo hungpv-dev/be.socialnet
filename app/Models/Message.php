@@ -27,6 +27,10 @@ class Message extends Model
         // 'created_at' => 'datetime'
     ];
 
+    public function emotions(){
+        return $this->morphMany(Emotion::class, 'emotionable');
+    }
+
     public function user(){
         return $this->belongsTo(User::class);
     }
