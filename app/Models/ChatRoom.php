@@ -35,7 +35,7 @@ class ChatRoom extends Model
 
     public function lastMessage()
     {
-        return $this->hasOne(Message::class, 'chat_room_id')->latest();
+        return $this->hasOne(Message::class, 'chat_room_id')->orderBy('id', 'desc');
     }
 
 

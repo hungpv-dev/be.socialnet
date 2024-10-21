@@ -1,8 +1,7 @@
 <?php
 
-namespace App\Events\Messages;
+namespace App\Events\ChatRoom;
 
-use App\Models\Message;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
@@ -12,25 +11,27 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-class MessagesSendEvent implements ShouldBroadcast
+class PushMessage implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
+    public $chat_room_id;
     public $message;
-    public function __construct(Message $message)
+    public function __construct($chat_room_id,$message)
     {
+        $this->chat_room_id = $chat_room_id;
         $this->message = $message;
     }
 
     public function broadcastOn(): Channel
     {
-        return new PrivateChannel('messages.' . $this->message->id);
+        return new PrivateChannel('room.push-message.' . $this->chat_room_id);
     }
 
     public function broadcastWith(): array
     {
         return [
-            'message' => $this->message,
+            'message' => $this->message
         ];
     }
 }
