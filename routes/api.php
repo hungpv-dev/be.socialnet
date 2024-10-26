@@ -2,12 +2,10 @@
 
 use App\Http\Controllers\Auth\{
     LogoutController,
-    RegisterController
+    RegisterController,
+    ResetPasswordController
 };
 
-use App\Http\Controllers\Auth\ResetPasswordController;
-use App\Http\Controllers\ChatRoomController;
-use App\Http\Controllers\MessageController;
 use App\Http\Controllers\PostController;
 
 use App\Http\Controllers\{
@@ -86,8 +84,16 @@ Route::middleware('auth:api')->group(function () {
 
     Route::prefix('user/')->group(function () {
         Route::put('profile/update', [UserController::class, 'updateProfile']);
-        Route::put('avatar/update', [UserController::class, 'updateAvatar']);
-        Route::put('background/update', [UserController::class, 'updateBackground']);
+        Route::prefix('avatar/')->group(function () {
+            Route::post('update', [UserController::class, 'updateAvatar']);
+            Route::get('list', [UserController::class, 'listAvatar']);
+            Route::delete('destroy', [UserController::class, 'destroyAvatar']);
+        });
+        Route::prefix('background/')->group(function () {
+            Route::post('update', [UserController::class, 'updateBackground']);
+            Route::get('list', [UserController::class, 'listBackground']);
+            Route::delete('destroy', [UserController::class, 'destroyBackground']);
+        });
     });
 
     Route::resource('blocks', BlockController::class);
