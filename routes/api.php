@@ -10,12 +10,14 @@ use App\Http\Controllers\{
     FriendController,
     FriendRequestController,
     MessageController,
+    StoryController
 };
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 
 Route::post('register', [RegisterController::class, 'register']);
+Route::post('/register', 'AuthController@register');
 
 Route::middleware('auth:api')->group(function () {
 
@@ -49,6 +51,11 @@ Route::middleware('auth:api')->group(function () {
         Route::put('profile/update', [UserController::class, 'updateProfile']);
         Route::put('avatar/update', [UserController::class, 'updateAvatar']);
         Route::put('background/update', [UserController::class, 'updateBackground']);
+    });
+
+    Route::get('story/{id}/viewer', [StoryController::class, 'getListViewer']);
+    Route::post('story/emotion/{id}', [StoryController::class, 'emotion']);
+    Route::resource('story', StoryController::class);
 
     Route::prefix('chat-room')->group(function(){
         Route::get('/',[ChatRoomController::class,'index']);
