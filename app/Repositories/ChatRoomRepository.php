@@ -7,6 +7,7 @@ use App\Models\ChatType;
 use App\Models\User;
 use GuzzleHttp\Psr7\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class ChatRoomRepository
 {
@@ -59,6 +60,12 @@ class ChatRoomRepository
                     $data['last_active']['user_'.$user->id] = now();
                     $data['notification'][] = 'user_'.$user->id;
                 }
+                if($request->has('avatar')){
+                    $avatar = $request->file('avatar');
+                    $path = $avatar->store('rooms/avatar','public');
+                    $fullPath = url('storage/' . $path);
+                    $data['avatar'] = $fullPath;
+                }
                 $data['created_at'] = now();
                 $chat_room = ChatRoom::create($data);
             }
@@ -94,5 +101,51 @@ class ChatRoomRepository
         return response([
             'data' => new ChatRoomResource($chatRoom)
         ], 200);
+    }
+
+    public function namesUpdate($request,$room){
+        $id = Auth::id();
+        $names = $room->name;
+        $newName = [];
+        foreach($names as $k =>  $val){
+            if($k == 'user_'.$id){
+                $newName[$k] = $request->theirNickname == '' ? $val : $request->theirNickname;
+            }else{
+                $newName[$k] = $request->myNickname == '' ? $val : $request->myNickname;
+            }
+        }
+        $room->name = $newName;
+        $room->save();
+        return $room;
+    }
+
+    public function blockUpdate($request,$room){
+        $block = 'user_'.$request->block;
+        $list = $room->blocks;
+        $check = in_array($block, haystack: $list);
+        if($check){
+            $list = array_diff($list, [$block]);
+        }else{
+            $list = [...$list,$block];
+        }
+        $room->blocks = $list;
+        $room->save();
+        return $room;
+    }
+    public function avatarUpdate($request,$room){
+        if($request->has('avatar')){
+            // Xóa ảnh cũ nếu có
+            if($room->avatar) {
+                $oldPath = str_replace(url('storage/'), '', $room->avatar);
+                Storage::disk('public')->delete($oldPath);
+            }
+            
+            $avatar = $request->file('avatar');
+            $path = $avatar->store('rooms/avatar','public');
+            $fullPath = url('storage/' . $path);
+            $room->avatar = $fullPath;
+            $room->save();
+        }
+        return $room;
     }
 }

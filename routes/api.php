@@ -6,8 +6,6 @@ use App\Http\Controllers\Auth\{
 };
 
 use App\Http\Controllers\Auth\ResetPasswordController;
-use App\Http\Controllers\ChatRoomController;
-use App\Http\Controllers\MessageController;
 use App\Http\Controllers\PostController;
 
 use App\Http\Controllers\{
@@ -18,8 +16,13 @@ use App\Http\Controllers\{
     FriendRequestController,
     MessageController,
 };
-
+use App\Models\User;
+use Illuminate\Auth\GenericUser;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Route;
 
 
@@ -33,15 +36,24 @@ Route::prefix('password/')->group(function () {
 
 Route::post('register', [RegisterController::class, 'register']);
 
-Route::middleware('auth:api')->group(function () {
+Route::middleware(['auth:api'])->group(function () {
 
     Route::post('/broadcasting/auth', function (Request $request) {
-        return true;
+        return Broadcast::auth($request);
     });
 
 
     Route::get('/user', function (Request $request) {
         return $request->user();
+    });
+
+    Route::get('/search-friends', function (Request $request) {
+        $id = Auth::id();
+        $users = User::where('id','!=',$id);
+        if($request->has('q')){
+            $users = $users->where('name','like', '%'.$request->get('q').'%');
+        }
+        return $users->get();
     });
 
 
@@ -51,11 +63,15 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/logout', [LogoutController::class, 'logout']);
     Route::post('/logout-all-driver', [LogoutController::class, 'logoutOtherFromDriver']);
 
+    Route::post('/change-status', [LogoutController::class, 'changeStatus']);
+
 
     Route::prefix('chat-room')->group(function () {
         Route::get('/', [ChatRoomController::class, 'index']);
+        Route::get('/images/{id}', [ChatRoomController::class, 'images']);
         Route::post('/', [ChatRoomController::class, 'store']);
         Route::get('/{id}', [ChatRoomController::class, 'show']);
+        Route::put('/{id}', [ChatRoomController::class, 'update']);
         Route::post('/notification/{id}', [ChatRoomController::class, 'notification']);
         Route::put('/send/{id}', [ChatRoomController::class, 'send']);
     });

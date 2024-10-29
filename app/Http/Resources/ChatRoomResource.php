@@ -20,15 +20,21 @@ class ChatRoomResource extends JsonResource
         $response = [];
         $response['chat_room_id'] = $this->id;
         $response['chat_room_type'] = $this->chat_type_id;
+        $response['avatar'] = $this->avatar;
         $userIds = array_map(function($id){
             return (int) str_replace('user_', '', $id);
-        }, array: array_diff( $this->user, ['user_'.$user_id]));
+        },$this->user);
         $users = User::whereIn('id',$userIds)->select('id','name','time_offline','is_online','avatar')->get();
         $response['name'] = $this->name['user_'.$user_id] ?? '';
-        $response['online'] = $users->pluck('is_online')->contains(1);
+        $response['online'] = $users->where('id','!=',$user_id)->pluck('is_online')->contains(1);
         $response['notification'] = in_array('user_'.$user_id, $this->notification) ? true : false;
-        $response['block'] = in_array('user_'.$user_id, $this->blocks) ? true : false;
-        $response['users'] = $users;
+        $response['block'] = $this->blocks;
+        $response['users'] = $users->where('id','!=',$user_id)->values();
+        $idAdmin = array_map(function($id){
+            return (int) str_replace('user_', '', $id);
+        }, array: $this->admin);
+        $response['admin'] = $users->whereIn('id', $idAdmin)->values();
+        $response['test'] = $users->toArray();
         $last_message = $this->lastMessage;
         if($last_message){
             $response['last_message'] = [

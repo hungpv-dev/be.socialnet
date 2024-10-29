@@ -2,6 +2,7 @@
 
 use App\Events\ChatRoom\PushMessage;
 use App\Events\ChatRoom\SendMessage;
+use App\Events\UserStatusUpdated;
 use App\Http\Resources\ChatRoomResource;
 use App\Models\ChatRoom;
 use App\Models\Message;
@@ -30,6 +31,7 @@ Route::get('/user', function () {
 });
 
 Route::get('/test', function () {
+    event(new UserStatusUpdated(1,1));
     return response()->json(now());
     // $newRoom = ChatRoom::find(15);
     // $roomResource = new ChatRoomResource($newRoom);
