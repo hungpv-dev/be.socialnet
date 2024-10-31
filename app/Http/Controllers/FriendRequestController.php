@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\FriendNotification;
 use App\Models\FriendRequests;
 use App\Models\User;
 use App\Models\Friend;
@@ -48,17 +49,25 @@ class FriendRequestController extends Controller
                 return $this->sendResponse('Yêu cầu kết bạn đã tồn tại', 400);
             }
 
+            $sender = [
+                'id' => auth()->user()->id,
+                'name' => auth()->user()->name,
+                'avatar' => auth()->user()->avatar,
+            ];
+            $message = " đã gửi cho bạn lời mời kết bạn.";
+            broadcast(new FriendNotification($sender, $to_user, $message));
             FriendRequests::create([
                 'sender' => $user->id,
                 'receiver' => $to_user,
             ]);
-            //Gửi thông báo kết bạn
+            $receiverUser->follower++;
+            $receiverUser->save();
+
             return $this->sendResponse('Gửi lời mời kết bạn thành công!');
         }
     }
     //Chấp nhận lời mời kết bạn
     public function accept(Request $request) {
-        // return $this->sendResponse($request->id_account);
         if ($request->method() == "POST") {
             $to_user = $request->id_account;
             $user = $request->user();
@@ -67,8 +76,8 @@ class FriendRequestController extends Controller
                 return $this->sendResponse('Không thể chấp nhận kết bạn với chính mình', 400);
             }
             // Kiểm tra người dùng có tồn tại
-            $receiverUser = User::find($to_user);
-            if (!$receiverUser) {
+            $sender = User::find($to_user);
+            if (!$sender) {
                 return $this->sendResponse('Người dùng không tồn tại', 404);
             }
 
@@ -93,12 +102,24 @@ class FriendRequestController extends Controller
                 return $this->sendResponse('Không tìm thấy lời mời kết bạn', 400);
             }
 
+            $data = [
+                'id' => auth()->user()->id,
+                'name' => auth()->user()->name,
+                'avatar' => auth()->user()->avatar,
+            ];
+            $message = " đã chấp nhận lời mời kết bạn của bạn.";
+            broadcast(new FriendNotification($data, $to_user, $message));
             $existingRequest->delete();
             Friend::create([
                 'user1' => min($user->id, $to_user),
                 'user2' => max($user->id, $to_user)
             ]);
-            //Gửi thông báo chấp nhận lời mời kết bạn
+            $sender->follower++;
+            $sender->friend_counts++;
+            $sender->save();
+            $request->user()->friend_counts++;
+            $request->user()->save();
+
             return $this->sendResponse('Chấp nhận lời mời kết bạn thành công!');
         }
     }
@@ -110,8 +131,8 @@ class FriendRequestController extends Controller
             $user = $request->user();
 
             // Kiểm tra người dùng có tồn tại
-            $receiverUser = User::find($to_user);
-            if (!$receiverUser) {
+            $sender = User::find($to_user);
+            if (!$sender) {
                 return $this->sendResponse('Người dùng không tồn tại', 404);
             }
 
@@ -128,6 +149,8 @@ class FriendRequestController extends Controller
             }
 
             $existingRequest->delete();
+            $request->user()->follower--;
+            $request->user()->save();
             return $this->sendResponse('Từ chối lời mời kết bạn thành công!');
         }
     }
@@ -139,8 +162,8 @@ class FriendRequestController extends Controller
             $user = $request->user();
 
             // Kiểm tra người dùng có tồn tại
-            $receiverUser = User::find($to_user);
-            if (!$receiverUser) {
+            $receiver = User::find($to_user);
+            if (!$receiver) {
                 return $this->sendResponse('Người dùng không tồn tại', 404);
             }
 
@@ -157,6 +180,8 @@ class FriendRequestController extends Controller
             }
 
             $existingRequest->delete();
+            $receiver->follower--;
+            $receiver->save();
             return $this->sendResponse('Xóa lời mời kết bạn thành công!');
         }
     }

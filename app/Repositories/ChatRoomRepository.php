@@ -57,7 +57,7 @@ class ChatRoomRepository
                     $data['name']['user_'.$user->id] = $room_name;
                     $data['last_remove']['user_'.$user->id] = null;
                     $data['last_active']['user_'.$user->id] = now();
-                    $data['notification']['user_'.$user->id] = $user->id;
+                    $data['notification'][] = 'user_'.$user->id;
                 }
                 $data['created_at'] = now();
                 $chat_room = ChatRoom::create($data);

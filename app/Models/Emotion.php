@@ -9,6 +9,10 @@ class Emotion extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+    protected $table = 'emotions';
+    protected $guarded = [];
+
     public function emotionable(){
         return $this->morphTo();
     }

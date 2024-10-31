@@ -65,6 +65,12 @@ class FriendController extends Controller
             }
 
             $friendship->delete();
+            $friendUser->follower--;
+            $friendUser->friend_counts--;
+            $friendUser->save();
+            $request->user()->follower--;
+            $request->user()->friend_counts--;
+            $request->user()->save();
             return $this->sendResponse('Xóa mối quan hệ bạn bè thành công!');
         }
 
@@ -74,10 +80,9 @@ class FriendController extends Controller
     public function getFriendList(Request $request)
     {
         if ($request->method() == "GET") {
-
             $user = $request->user();
-
             $sort = $request->input('sort', 'desc');
+            $perPage = $request->input('per_page', 10);
 
             if (!in_array($sort, ['asc', 'desc'])) {
                 $sort = 'desc';
@@ -89,28 +94,29 @@ class FriendController extends Controller
             })
                 ->with(['user1:id,name,avatar', 'user2:id,name,avatar'])
                 ->orderBy('created_at', $sort)
-                ->paginate(10);
+                ->paginate($perPage);
 
-                $friendsList = $friends->map(function ($friendship) use ($user) {
-                    if (!is_object($friendship->user1) || !is_object($friendship->user2)) {
-                        return null;
-                    }
+            $friendsList = $friends->map(function ($friendship) use ($user) {
+                if (!is_object($friendship->user1) || !is_object($friendship->user2)) {
+                    return null;
+                }
 
-                    $friend = $friendship->user1->id === $user->id ? $friendship->user2 : $friendship->user1;
+                $friend = $friendship->user1->id === $user->id ? $friendship->user2 : $friendship->user1;
 
-                    return [
-                        'id' => $friend->id,
-                        'name' => $friend->name,
-                        'avatar' => $friend->avatar,
-                        'created_at' => $friendship->created_at,
-                    ];
-                })->filter();
+                return [
+                    'id' => $friend->id,
+                    'name' => $friend->name,
+                    'avatar' => $friend->avatar,
+                    'created_at' => $friendship->created_at,
+                ];
+            })->filter();
 
             return $this->sendResponse([
                 'friends' => $friends->values(),
                 'total' => $friends->total(),
                 'current_page' => $friends->currentPage(),
                 'last_page' => $friends->lastPage(),
+                'per_page' => $friends->perPage(),
             ]);
         }
 

@@ -1,10 +1,12 @@
 <?php
 
-use App\Events\Messages\MessagesSendEvent;
+use App\Events\ChatRoom\PushMessage;
+use App\Events\ChatRoom\SendMessage;
+use App\Http\Resources\ChatRoomResource;
+use App\Models\ChatRoom;
 use App\Models\Message;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -28,7 +30,8 @@ Route::get('/user', function () {
 });
 
 Route::get('/test', function () {
-    $message = Message::find(1010);
-    broadcast(new MessagesSendEvent($message));
-    return 'ok';
+    return response()->json(now());
+    // $newRoom = ChatRoom::find(15);
+    // $roomResource = new ChatRoomResource($newRoom);
+    // return $roomResource;
 });

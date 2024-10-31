@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->references('id')->on('users');
             $table->text(column: 'content')->comment('Nội dung bài post');
             $table->json(column: 'data')->comment('Ảnh và video bài viết');
-            $table->foreignId('share_id')->references('id')->on('posts')->nullable();
+            $table->unsignedBigInteger('share_id')->nullable();
             $table->enum('status', ['public', 'friend', 'private'])->default('friend');
             $table->boolean(column: 'is_active')->default(true)->comment('1: Hiển thị, 0: Bị khóa');
             $table->enum('type', ['avatar','background','post'])->default('post');
