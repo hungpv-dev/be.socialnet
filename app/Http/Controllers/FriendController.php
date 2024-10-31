@@ -65,6 +65,12 @@ class FriendController extends Controller
             }
 
             $friendship->delete();
+            $friendUser->follower--;
+            $friendUser->friend_counts--;
+            $friendUser->save();
+            $request->user()->follower--;
+            $request->user()->friend_counts--;
+            $request->user()->save();
             return $this->sendResponse('Xóa mối quan hệ bạn bè thành công!');
         }
 
