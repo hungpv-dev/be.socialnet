@@ -16,7 +16,8 @@ class Message extends Model
         "flagged",
         "files",
         "created_at",
-        "reply_to"
+        "reply_to",
+        'is_nofi',
     ];
 
     public $timestamps = false;
@@ -24,6 +25,7 @@ class Message extends Model
         "is_seen" => 'array',
         "flagged" => 'array',
         "files" => 'array',
+        'is_nofi' => 'boolean'
         // 'created_at' => 'datetime'
     ];
 

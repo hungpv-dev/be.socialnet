@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
 
+
 class ChatRoomResource extends JsonResource
 {
     /**
@@ -34,9 +35,15 @@ class ChatRoomResource extends JsonResource
             return (int) str_replace('user_', '', $id);
         }, array: $this->admin);
         $response['admin'] = $users->whereIn('id', $idAdmin)->values();
-        $response['test'] = $users->toArray();
-        $last_message = $this->lastMessage;
+        $response['outs'] = $this->outs;
+
+        $lastActive = $this->last_active['user_'.$user_id];
+
+        $lastRemove = $this->last_remove['user_'.$user_id] ?? now()->format('Y-m-d H:i:s');
+        $last_message = $this->messages()->whereBetween('created_at', [$lastActive, $lastRemove])->latest('id')->first();
+        
         if($last_message){
+            
             $response['last_message'] = [
                 'id' => $last_message->id,
                 'body' => $last_message->body,
@@ -48,6 +55,7 @@ class ChatRoomResource extends JsonResource
         }else{
             $response['last_message'] = $last_message;
         }
+        
         return $response;
     }
 }

@@ -28,6 +28,7 @@ class MessageResource extends JsonResource
         $response['content'] = $this->body;
         $response['files'] = $this->files;
         $response['is_seen'] = $users;
+        $response['is_nofi'] = $this->is_nofi;
         $response['emotions'] = $this->emotions;
         $response['flagged'] = in_array('user_'.$user_id, $this->flagged);
         $response['created_at'] = $this->created_at;

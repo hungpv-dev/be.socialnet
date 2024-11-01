@@ -17,6 +17,7 @@ class ChatRoom extends Model
         'name',
         'user',
         'avatar',
+        'outs',
         'admin',
         'last_remove',
         'last_active',
@@ -32,6 +33,7 @@ class ChatRoom extends Model
         'last_remove' => 'array',
         'notification' => 'array',
         'blocks' => 'array',
+        'outs' => 'array',
     ];
 
     public function lastMessage()

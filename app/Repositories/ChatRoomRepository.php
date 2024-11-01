@@ -109,8 +109,16 @@ class ChatRoomRepository
         $newName = [];
         foreach($names as $k =>  $val){
             if($k == 'user_'.$id){
+                $content = $request->user()->name . ' đã đặt biệt danh cho anh ấy là '. $request->theirNickname;
+                if($request->theirNickname != $val){
+                    createNofiMessage($room->id, $content);
+                }
                 $newName[$k] = $request->theirNickname == '' ? $val : $request->theirNickname;
             }else{
+                $content = $request->user()->name . ' đã đặt biệt danh cho bạn là '. $request->myNickname;
+                if($request->myNickname != $val){
+                    createNofiMessage($room->id, $content);
+                }
                 $newName[$k] = $request->myNickname == '' ? $val : $request->myNickname;
             }
         }
@@ -146,6 +154,27 @@ class ChatRoomRepository
             $room->avatar = $fullPath;
             $room->save();
         }
+        return $room;
+    }
+
+    public function addadminUpdate($request,$room){
+        $user_id = $request->id;
+        $group = 'user_'.$user_id;
+        if(!in_array($group, haystack: $room->admin)){
+            $admin = $room->admin;
+            $admin[] = $group;
+            $room->admin = $admin;
+            $room->save();
+        }
+        return $room;
+    }
+    public function removeUpdate($request,$room){
+        $user_id = Auth::id();
+        $group = 'user_'.$user_id;
+        $lastActives = $room->last_active;
+        $lastActives[$group] = now()->format('Y-m-d H:i:s');
+        $room->last_active = $lastActives;
+        $room->save();
         return $room;
     }
 }

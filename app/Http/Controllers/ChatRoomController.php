@@ -7,11 +7,13 @@ use App\Http\Resources\ChatRoomResource;
 use App\Models\ChatRoom;
 use App\Models\ChatType;
 use App\Models\Message;
+use App\Models\User;
 use App\Repositories\ChatRoomRepository;
 use App\Repositories\MessageRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ChatRoomController extends Controller
 {
@@ -20,20 +22,37 @@ class ChatRoomController extends Controller
         private MessageRepository $messageRepository
     ){}
 
-    public function index(){
+    public function index(Request $request){
+        $index = $request->input('index', 0);
         $user_id = Auth::id();
-        $chatrooms = ChatRoom::whereJsonContains('user', 'user_'.$user_id)
-        ->with('lastMessage')
-        ->simplePaginate(perPage: 15);
+        $chatrooms = ChatRoom::from('chat_rooms','c')
+        ->whereJsonContains('user', 'user_'.$user_id)
+        ->select('c.*', DB::raw('MAX(m.created_at) as latest_message'))
+        ->join('messages as m', function($join) use ( $user_id) {
+            $join->on('m.chat_room_id', '=', 'c.id')
+                 ->whereBetween('m.created_at',[
+                    DB::raw("c.last_active->>'$.user_".$user_id."'"),
+                    DB::raw("CASE WHEN c.last_remove->>'$.user_" . $user_id . "' = 'null' THEN '" . now() . "' ELSE c.last_remove->>'$.user_" . $user_id . "' END")
+                 ]);
+        })
+        ->groupBy('c.id')
+        ->orderBy('latest_message','desc')
+        ->skip($index)
+        ->take(20)
+        ->get();
         return ChatRoomResource::collection($chatrooms);
     }
     public function images($id){
         try {
             $user_id = Auth::id();
-            ChatRoom::whereJsonContains('user', 'user_'.$user_id)->findOrFail($id);
+            $room = ChatRoom::whereJsonContains('user', 'user_'.$user_id)->findOrFail($id);
+            $lastActive = $room->last_active['user_'.$user_id];
+            $lastRemove = $room->last_remove['user_'.$user_id] ?? now();
+
             $messages = Message::where('chat_room_id',$id)
             ->whereJsonLength('files', '>', 0)
             ->orderBy('created_at','desc')
+            ->whereBetween('created_at',[$lastActive,$lastRemove])
             ->paginate(6);
             return response()->json([
                 'data' => $messages
@@ -92,5 +111,41 @@ class ChatRoomController extends Controller
 
     public function send($id){
         return $this->messageRepository->send($id);
+    }
+
+    public function outGroup($id,Request $request){
+        $user_id = Auth::id();
+        try {
+            $room = ChatRoom::whereJsonContains('user', 'user_'.$user_id)->findOrFail($id);
+            DB::beginTransaction();
+            $content = 'đã rời khỏi nhóm';
+            if($request->has('id')){
+                $content = 'đã bị '.$request->user()->name.' kích khỏi nhóm';
+                $user_id = $request->id;
+            }
+            $user = User::findOrFail($user_id);
+            $content = $user->name. ' ' .$content;
+            // Thêm user_id vào mảng outs
+            $outs = $room->outs ?? [];
+            $removes = $room->last_remove ?? [];
+            $removes['user_'.$user_id] = now()->format('Y-m-d H:i:s');
+            if (!in_array('user_'.$user_id, $outs)) {
+                $outs[] = 'user_'.$user_id;
+            }
+            
+            $room->update(['outs' => $outs,'last_remove'=> $removes]);
+            createNofiMessage($room->id,$content);
+            DB::commit();
+            broadcast(new RefreshUsers($room));
+            return $this->sendResponse([
+                'message' => 'Rời nhóm thành công'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->sendResponse([
+                'message' => 'Không thể rời nhóm',
+                'error' => $e->getMessage()
+            ], 404);
+        }
     }
 }
