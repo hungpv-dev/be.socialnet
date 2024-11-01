@@ -6,61 +6,16 @@ use App\Models\User;
 use App\Models\Friend;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\Post;
 use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
-    public function getUserBasicInfo($userId)
+    protected $friendController;
+
+    public function __construct(FriendController $friendController)
     {
-        $user = User::findOrFail($userId);
-
-        $friendsCount = Friend::where(function ($query) use ($userId) {
-            $query->where('user1', $userId)
-                ->orWhere('user2', $userId);
-        })->count();
-
-        return response()->json([
-            'id' => $user->id,
-            'name' => $user->name,
-            'avatar' => $user->avatar,
-            'friends_count' => $friendsCount,
-        ]);
-    }
-
-    public function getUserPosts($userId)
-    {
-        $posts = User::findOrFail($userId)->posts()->latest()->take(10)->get();
-        return response()->json($posts);
-    }
-
-    public function getUserStories($userId)
-    {
-        $stories = User::findOrFail($userId)
-            ->stories()
-            ->where('created_at', '>=', now()->subDay())
-            ->latest()
-            ->get();
-        return response()->json($stories);
-    }
-
-    public function getUserFriends($userId)
-    {
-        $friends = Friend::where(function ($query) use ($userId) {
-            $query->where('user1', $userId)
-                ->orWhere('user2', $userId);
-        })
-            ->with(['user1:id,name,avatar', 'user2:id,name,avatar'])
-            ->take(20)
-            ->get()
-            ->map(function ($friendship) use ($userId) {
-                $friend = $friendship->user1->id === $userId ? $friendship->user2 : $friendship->user1;
-                return [
-                    'id' => $friend->id,
-                    'name' => $friend->name,
-                    'avatar' => $friend->avatar,
-                ];
-            });
-        return response()->json($friends);
+        $this->friendController = $friendController;
     }
 
     public function updateProfile(Request $request)
@@ -70,38 +25,167 @@ class UserController extends Controller
                 'name' => 'required|string|max:255',
                 'address' => 'nullable|string|max:255',
                 'hometown' => 'nullable|string|max:255',
+                'phone' => 'nullable|max:255',
                 'gender' => 'nullable|in:male,female,other',
                 'birthday' => 'nullable|date',
                 'relationship' => 'nullable|in:single,married,divorced,widowed',
             ]);
 
             if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()], 422);
+                return $this->sendResponse(['errors' => $validator->errors()], 422);
             }
 
             $user = $request->user();
             $user->update($validator->validated());
 
-            return response()->json('Cập nhật thông tin cá nhân thành công');
+            return $this->sendResponse('Cập nhật thông tin cá nhân thành công');
         }
 
-        return response()->json(['error' => 'Phương thức không được hỗ trợ'], 405);
+        return $this->sendResponse(['error' => 'Phương thức không được hỗ trợ'], 405);
     }
+    //Tìm kiếm người dùng
+    public function findUser(Request $request)
+    {
+        if (!$request->name) {
+            return $this->sendResponse(['message' => 'Vui lòng điền tên tài khoản bạn muốn tìm kiếm!'], 404);
+        }
+        $per_page = $request->input('per_page', 10);
+        $currentUserId = auth()->user()->id;
+
+        $query = User::where('name', 'LIKE', "%" . $request->name . "%")
+            ->where('is_active', 0)
+            ->whereNull('deleted_at')
+            ->select('id', 'name', 'address', 'hometown', 'gender', 'relationship', 'follower', 'friend_counts', 'is_online')
+            ->where('id', '!=', $currentUserId)
+            ->whereNotIn('id', function ($subQuery) use ($currentUserId) {
+                $subQuery->select('user_block')
+                    ->from('blocks')
+                    ->where('user_is_blocked', $currentUserId);
+            })
+            ->whereNotIn('id', function ($subQuery) use ($currentUserId) {
+                $subQuery->select('user_is_blocked')
+                    ->from('blocks')
+                    ->where('user_block', $currentUserId);
+            });
+
+        if ($request->address) {
+            $query->where('address', 'LIKE', '%' . $request->address . '%');
+        }
+        if ($request->hometown) {
+            $query->where('hometown', 'LIKE', '%' . $request->hometown . '%');
+        }
+        if ($request->gender) {
+            $query->where('gender', $request->gender);
+        }
+        if ($request->relationship) {
+            $query->where('relationship', $request->relationship);
+        }
+
+        $data = $query->paginate($per_page);
+
+
+        if ($request->user()) {
+            foreach ($data->items() as $friend) {
+                $friend->friend_common = $this->friendController->findCommonFriends($request->user()->id, $friend->id);
+                $friend->button = $this->friendController->checkFriendStatus($friend->id);
+            }
+        }
+
+        return $this->sendResponse($data);
+    }
+    //Làm việc với avatar
     public function updateAvatar(Request $request)
     {
-        if ($request->isMethod('POST')) {
-            //Đăng thành bài viết và cập nhật vào bảng users
+        $user_id = auth()->user()->id;
+        $post = new Post();
+        $post->user_id = $user_id;
+        $post->share_id = NULL;
+        $post->content = $request->input('content', '');
+        $post->status = $request->input('status', 'public');
+        $post->type = 'avatar';
+        if (!$request->hasFile('avatar')) {
+            return $this->sendResponse(['message' => 'Vui lòng tải lên ảnh đại diện!'], 400);
+        } else if (!$request->file('avatar')->isValid() || strpos($request->file('avatar')->getMimeType(), 'image/') !== 0) {
+            return $this->sendResponse(['message' => 'Định dạng không hợp lệ!'], 400);
         }
+        $path = $request->file('avatar')->store('posts/image', 'public');
+        $fullPath = url('storage/' . $path);
+        $post->data = ['image' => $fullPath];
+        $post->save();
+        $request->user()->avatar = $fullPath;
+        $request->user()->save();
 
-        return response()->json(['error' => 'Phương thức không được hỗ trợ'], 405);
+        return $this->sendResponse([
+            'message' => 'Cập nhật ảnh đ���i diện thành công!'
+        ], 200);
     }
+    public function listAvatar()
+    {
+        $data = Post::where('user_id', auth()->user()->id)
+            ->where('type', 'avatar')
+            ->orderByDesc('created_at')
+            ->paginate(5);
 
+        return $this->sendResponse($data);
+    }
+    public function destroyAvatar(Request $request)
+    {
+        if ($request->isMethod("DELETE")) {
+            if ($request->user()->avatar) {
+                $request->user()->avatar = null;
+                $request->user()->save();
+
+                return $this->sendResponse(['message' => 'Xóa ảnh đại diện thành công!']);
+            } else {
+                return $this->sendResponse(['message' => 'Không có ảnh đại diện để xóa!'], 404);
+            }
+        }
+    }
     public function updateBackground(Request $request)
     {
-        if ($request->isMethod('POST')) {
-            //Đăng thành bài viết và cập nhật vào bảng users
+        $user_id = auth()->user()->id;
+        $post = new Post();
+        $post->user_id = $user_id;
+        $post->share_id = NULL;
+        $post->content = $request->input('content', '');
+        $post->status = $request->input('status', 'public');
+        $post->type = 'background';
+        if (!$request->hasFile('background')) {
+            return $this->sendResponse(['message' => 'Vui lòng tải lên ảnh đại diện!'], 400);
+        } else if (!$request->file('background')->isValid() || strpos($request->file('background')->getMimeType(), 'image/') !== 0) {
+            return $this->sendResponse(['message' => 'Định dạng không hợp lệ!'], 400);
         }
+        $path = $request->file('background')->store('posts/image', 'public');
+        $fullPath = url('storage/' . $path);
+        $post->data = ['image' => $fullPath];
+        $post->save();
+        $request->user()->cover_avatar = $fullPath;
+        $request->user()->save();
 
-        return response()->json(['error' => 'Phương thức không được hỗ trợ'], 405);
+        return $this->sendResponse([
+            'message' => 'Cập nhật ảnh bìa thành công!'
+        ], 200);
+    }
+    public function listBackground()
+    {
+        $data = Post::where('user_id', auth()->user()->id)
+            ->where('type', 'background')
+            ->orderByDesc('created_at')
+            ->paginate(5);
+
+        return $this->sendResponse($data);
+    }
+    public function destroyBackground(Request $request)
+    {
+        if ($request->isMethod("DELETE")) {
+            if ($request->user()->cover_avatar) {
+                $request->user()->cover_avatar = null;
+                $request->user()->save();
+
+                return $this->sendResponse(['message' => 'Xóa ảnh bìa thành công!']);
+            } else {
+                return $this->sendResponse(['message' => 'Không có ảnh bìa để xóa!'], 404);
+            }
+        }
     }
 }

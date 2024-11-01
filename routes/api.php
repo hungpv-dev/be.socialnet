@@ -2,10 +2,10 @@
 
 use App\Http\Controllers\Auth\{
     LogoutController,
-    RegisterController
+    RegisterController,
+    ResetPasswordController
 };
 
-use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\PostController;
 
 use App\Http\Controllers\{
@@ -15,6 +15,7 @@ use App\Http\Controllers\{
     FriendController,
     FriendRequestController,
     MessageController,
+    StoryController
 };
 use App\Models\User;
 use Illuminate\Auth\GenericUser;
@@ -35,6 +36,7 @@ Route::prefix('password/')->group(function () {
 });
 
 Route::post('register', [RegisterController::class, 'register']);
+Route::post('/register', 'AuthController@register');
 
 Route::middleware(['auth:api'])->group(function () {
 
@@ -87,6 +89,7 @@ Route::middleware(['auth:api'])->group(function () {
 
 
     Route::prefix('friend/')->group(function () {
+        Route::post('find', [FriendController::class, 'findFriend']);
         Route::delete('remove', [FriendController::class, 'removeFriend']);
         Route::get('list', [FriendController::class, 'getFriendList']);
         Route::get('suggest', [FriendController::class, 'getSuggestFriends']);
@@ -102,9 +105,18 @@ Route::middleware(['auth:api'])->group(function () {
     });
 
     Route::prefix('user/')->group(function () {
+        Route::post('find', [UserController::class, 'findUser']);
         Route::put('profile/update', [UserController::class, 'updateProfile']);
-        Route::put('avatar/update', [UserController::class, 'updateAvatar']);
-        Route::put('background/update', [UserController::class, 'updateBackground']);
+        Route::prefix('avatar/')->group(function () {
+            Route::post('update', [UserController::class, 'updateAvatar']);
+            Route::get('list', [UserController::class, 'listAvatar']);
+            Route::delete('destroy', [UserController::class, 'destroyAvatar']);
+        });
+        Route::prefix('background/')->group(function () {
+            Route::post('update', [UserController::class, 'updateBackground']);
+            Route::get('list', [UserController::class, 'listBackground']);
+            Route::delete('destroy', [UserController::class, 'destroyBackground']);
+        });
     });
 
     Route::resource('blocks', BlockController::class);
