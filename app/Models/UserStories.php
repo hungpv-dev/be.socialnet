@@ -8,6 +8,14 @@ use Illuminate\Database\Eloquent\Model;
 class UserStories extends Model
 {
     use HasFactory;
+    public $timestamps = false;
+
+    protected $fillable = [
+        'user_id',
+        'story_id',
+        'emoji',
+        'seen'
+    ];
 
     public function user(){
         return $this->belongsTo(User::class);
