@@ -11,57 +11,11 @@ use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
-    public function getUserBasicInfo($userId)
+    protected $friendController;
+
+    public function __construct(FriendController $friendController)
     {
-        $user = User::findOrFail($userId);
-
-        $friendsCount = Friend::where(function ($query) use ($userId) {
-            $query->where('user1', $userId)
-                ->orWhere('user2', $userId);
-        })->count();
-
-        return $this->sendResponse([
-            'id' => $user->id,
-            'name' => $user->name,
-            'avatar' => $user->avatar,
-            'friends_count' => $friendsCount,
-        ]);
-    }
-
-    public function getUserPosts($userId)
-    {
-        $posts = User::findOrFail($userId)->posts()->latest()->take(10)->get();
-        return $this->sendResponse($posts);
-    }
-
-    public function getUserStories($userId)
-    {
-        $stories = User::findOrFail($userId)
-            ->stories()
-            ->where('created_at', '>=', now()->subDay())
-            ->latest()
-            ->get();
-        return $this->sendResponse($stories);
-    }
-
-    public function getUserFriends($userId)
-    {
-        $friends = Friend::where(function ($query) use ($userId) {
-            $query->where('user1', $userId)
-                ->orWhere('user2', $userId);
-        })
-            ->with(['user1:id,name,avatar', 'user2:id,name,avatar'])
-            ->take(20)
-            ->get()
-            ->map(function ($friendship) use ($userId) {
-                $friend = $friendship->user1->id === $userId ? $friendship->user2 : $friendship->user1;
-                return [
-                    'id' => $friend->id,
-                    'name' => $friend->name,
-                    'avatar' => $friend->avatar,
-                ];
-            });
-        return $this->sendResponse($friends);
+        $this->friendController = $friendController;
     }
 
     public function updateProfile(Request $request)
@@ -89,6 +43,56 @@ class UserController extends Controller
 
         return $this->sendResponse(['error' => 'Phương thức không được hỗ trợ'], 405);
     }
+    //Tìm kiếm người dùng
+    public function findUser(Request $request)
+    {
+        if (!$request->name) {
+            return $this->sendResponse(['message' => 'Vui lòng điền tên tài khoản bạn muốn tìm kiếm!'], 404);
+        }
+        $per_page = $request->input('per_page', 10);
+        $currentUserId = auth()->user()->id;
+
+        $query = User::where('name', 'LIKE', "%" . $request->name . "%")
+            ->where('is_active', 0)
+            ->whereNull('deleted_at')
+            ->select('id', 'name', 'address', 'hometown', 'gender', 'relationship', 'follower', 'friend_counts', 'is_online')
+            ->where('id', '!=', $currentUserId)
+            ->whereNotIn('id', function ($subQuery) use ($currentUserId) {
+                $subQuery->select('user_block')
+                    ->from('blocks')
+                    ->where('user_is_blocked', $currentUserId);
+            })
+            ->whereNotIn('id', function ($subQuery) use ($currentUserId) {
+                $subQuery->select('user_is_blocked')
+                    ->from('blocks')
+                    ->where('user_block', $currentUserId);
+            });
+
+        if ($request->address) {
+            $query->where('address', 'LIKE', '%' . $request->address . '%');
+        }
+        if ($request->hometown) {
+            $query->where('hometown', 'LIKE', '%' . $request->hometown . '%');
+        }
+        if ($request->gender) {
+            $query->where('gender', $request->gender);
+        }
+        if ($request->relationship) {
+            $query->where('relationship', $request->relationship);
+        }
+
+        $data = $query->paginate($per_page);
+
+
+        if ($request->user()) {
+            foreach ($data->items() as $friend) {
+                $friend->friend_common = $this->friendController->findCommonFriends($request->user()->id, $friend->id);
+                $friend->button = $this->friendController->checkFriendStatus($friend->id);
+            }
+        }
+
+        return $this->sendResponse($data);
+    }
     //Làm việc với avatar
     public function updateAvatar(Request $request)
     {
@@ -112,7 +116,7 @@ class UserController extends Controller
         $request->user()->save();
 
         return $this->sendResponse([
-            'message' => 'Cập nhật ảnh đại diện thành công!'
+            'message' => 'Cập nhật ảnh đ���i diện thành công!'
         ], 200);
     }
     public function listAvatar()
@@ -124,8 +128,9 @@ class UserController extends Controller
 
         return $this->sendResponse($data);
     }
-    public function destroyAvatar(Request $request){
-        if($request->isMethod("DELETE")){
+    public function destroyAvatar(Request $request)
+    {
+        if ($request->isMethod("DELETE")) {
             if ($request->user()->avatar) {
                 $request->user()->avatar = null;
                 $request->user()->save();
@@ -161,7 +166,8 @@ class UserController extends Controller
             'message' => 'Cập nhật ảnh bìa thành công!'
         ], 200);
     }
-    public function listBackground(){
+    public function listBackground()
+    {
         $data = Post::where('user_id', auth()->user()->id)
             ->where('type', 'background')
             ->orderByDesc('created_at')
@@ -169,8 +175,9 @@ class UserController extends Controller
 
         return $this->sendResponse($data);
     }
-    public function destroyBackground(Request $request){
-        if($request->isMethod("DELETE")){
+    public function destroyBackground(Request $request)
+    {
+        if ($request->isMethod("DELETE")) {
             if ($request->user()->cover_avatar) {
                 $request->user()->cover_avatar = null;
                 $request->user()->save();
