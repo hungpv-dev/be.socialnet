@@ -6,7 +6,6 @@ use App\Http\Controllers\Auth\{
     ResetPasswordController
 };
 
-
 use App\Http\Controllers\PostController;
 
 use App\Http\Controllers\{
@@ -50,16 +49,6 @@ Route::middleware(['auth:api'])->group(function () {
         return $request->user();
     });
 
-    Route::get('/search-friends', function (Request $request) {
-        $id = Auth::id();
-        $users = User::where('id','!=',$id);
-        if($request->has('q')){
-            $users = $users->where('name','like', '%'.$request->get('q').'%');
-        }
-        return $users->get();
-    });
-
-
     Route::apiResource('/posts',PostController::class);
 
 
@@ -71,11 +60,11 @@ Route::middleware(['auth:api'])->group(function () {
 
     Route::prefix('chat-room')->group(function () {
         Route::get('/', [ChatRoomController::class, 'index']);
+        Route::get('/search', [ChatRoomController::class, 'search']);
         Route::get('/images/{id}', [ChatRoomController::class, 'images']);
         Route::post('/', [ChatRoomController::class, 'store']);
         Route::get('/{id}', action: [ChatRoomController::class, 'show']);
         Route::put('/{id}', [ChatRoomController::class, 'update']);
-        Route::post('/out-group/{id}', [ChatRoomController::class, 'outGroup']);
         Route::post('/notification/{id}', [ChatRoomController::class, 'notification']);
         Route::put('/send/{id}', [ChatRoomController::class, 'send']);
     });
