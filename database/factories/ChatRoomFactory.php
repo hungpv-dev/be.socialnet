@@ -31,15 +31,17 @@ class ChatRoomFactory extends Factory
             'user' => [$numberA,$numberB],
             'admin' => [],
             'last_remove' => [
-                $numberA => $this->faker->dateTimeBetween('-3 days', 'now')->format('Y-m-d H:i:s'),
-                $numberB => $this->faker->dateTimeBetween('-3 days', 'now')->format('Y-m-d H:i:s'),
+                $numberA => 'null',
+                $numberB => 'null',
             ],
             'last_active' => [
                 $numberA => $this->faker->dateTimeBetween('-30 days', 'now')->format('Y-m-d H:i:s'),
                 $numberB => $this->faker->dateTimeBetween('-30 days', 'now')->format('Y-m-d H:i:s'),
             ],
-            'created_at' => now(),
-            'updated_at' => now(),
+            'blocks' => [],
+            'outs' => [],
+            // 'created_at' => now(),
+            // 'updated_at' => now(),
         ];
     }
 }

@@ -9,7 +9,8 @@
             "databasePath": "/database/laravel-echo-server.sqlite"
         },
         "host": "redis",
-        "port": "6379"
+        "port": "6379",
+        "publishPresence": true
     },
     "devMode": false,
     "host": null,

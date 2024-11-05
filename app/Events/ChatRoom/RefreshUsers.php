@@ -24,15 +24,17 @@ class RefreshUsers implements ShouldBroadcast
     public function broadcastOn()
     {
         $channels = [];
-        foreach ($this->room->user as $user) {
-            $userId =  (int) str_replace('user_', '', $user); 
-            $channels[] = new PrivateChannel('room.refresh-users.' . $userId);
+        if ($this->room && !empty($this->room->user)) {
+            foreach ($this->room->user as $user) {
+                $userId = (int) str_replace('user_', '', $user); 
+                $channels[] = new PrivateChannel('room.refresh-users.' . $userId);
+            }
         }
         return $channels;
     }
 
     public function broadcastWith(): array
-    {
+    {   
         return [
             'room' => $this->room
         ];

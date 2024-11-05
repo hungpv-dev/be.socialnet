@@ -18,8 +18,13 @@ use App\Http\Controllers\{
     MessageController,
     StoryController
 };
-
+use App\Models\User;
+use Illuminate\Auth\GenericUser;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Route;
 
 
@@ -36,10 +41,10 @@ Route::prefix('password/')->group(function () {
 // Route::post('register', [RegisterController::class, 'register']);
 // Route::post('/register', 'AuthController@register');
 
-Route::middleware('auth:api')->group(function () {
+Route::middleware(['auth:api'])->group(function () {
 
     Route::post('/broadcasting/auth', function (Request $request) {
-        return true;
+        return Broadcast::auth($request);
     });
 
 
@@ -47,18 +52,22 @@ Route::middleware('auth:api')->group(function () {
         return $request->user();
     });
 
-
     Route::apiResource('/posts',PostController::class);
 
 
     Route::post('/logout', [LogoutController::class, 'logout']);
     Route::post('/logout-all-driver', [LogoutController::class, 'logoutOtherFromDriver']);
 
+    Route::post('/change-status', [LogoutController::class, 'changeStatus']);
+
 
     Route::prefix('chat-room')->group(function () {
         Route::get('/', [ChatRoomController::class, 'index']);
+        Route::get('/search', [ChatRoomController::class, 'search']);
+        Route::get('/images/{id}', [ChatRoomController::class, 'images']);
         Route::post('/', [ChatRoomController::class, 'store']);
-        Route::get('/{id}', [ChatRoomController::class, 'show']);
+        Route::get('/{id}', action: [ChatRoomController::class, 'show']);
+        Route::put('/{id}', [ChatRoomController::class, 'update']);
         Route::post('/notification/{id}', [ChatRoomController::class, 'notification']);
         Route::put('/send/{id}', [ChatRoomController::class, 'send']);
     });
@@ -73,6 +82,7 @@ Route::middleware('auth:api')->group(function () {
 
 
     Route::prefix('friend/')->group(function () {
+        Route::post('find', [FriendController::class, 'findFriend']);
         Route::delete('remove', [FriendController::class, 'removeFriend']);
         Route::get('list', [FriendController::class, 'getFriendList']);
         Route::get('suggest', [FriendController::class, 'getSuggestFriends']);
@@ -88,6 +98,7 @@ Route::middleware('auth:api')->group(function () {
     });
 
     Route::prefix('user/')->group(function () {
+        Route::post('find', [UserController::class, 'findUser']);
         Route::put('profile/update', [UserController::class, 'updateProfile']);
         Route::prefix('avatar/')->group(function () {
             Route::post('update', [UserController::class, 'updateAvatar']);
@@ -106,9 +117,4 @@ Route::middleware('auth:api')->group(function () {
     });
     Route::resource('story', StoryController::class);
     Route::resource('blocks', BlockController::class);
-
     Route::resource('comments', CommentControler::class);
-
-
-});
-
