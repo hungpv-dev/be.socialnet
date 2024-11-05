@@ -8,4 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 class Company extends Model
 {
     use HasFactory;
+    public $timestamps = false;
+    protected $fillable = [
+        'name'
+    ];
+    public function institutions()
+    {
+        return $this->morphMany(UserInstitution::class, 'instituteable');
+    }
 }

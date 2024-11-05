@@ -70,8 +70,9 @@ Route::middleware('auth:api')->group(function () {
     Route::prefix('friend/')->group(function () {
         Route::post('find', [FriendController::class, 'findFriend']);
         Route::delete('remove', [FriendController::class, 'removeFriend']);
-        Route::get('list', [FriendController::class, 'getFriendList']);
+        Route::get('list/{id}', [FriendController::class, 'getFriendList']);
         Route::get('suggest', [FriendController::class, 'getSuggestFriends']);
+        Route::get('common/list/{id}', [FriendController::class, 'listCommonFriends']);
 
         Route::prefix('request/')->group(function () {
             Route::post('add', [FriendRequestController::class, 'add']);
@@ -85,6 +86,7 @@ Route::middleware('auth:api')->group(function () {
 
     Route::prefix('user/')->group(function () {
         Route::post('find', [UserController::class, 'findUser']);
+        Route::get('{id}', [UserController::class, 'getProfile']);
         Route::put('profile/update', [UserController::class, 'updateProfile']);
         Route::prefix('avatar/')->group(function () {
             Route::post('update', [UserController::class, 'updateAvatar']);

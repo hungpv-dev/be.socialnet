@@ -86,4 +86,8 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(User::class, 'friends', 'user1', 'user2');
     }
+    public function institutions()
+    {
+        return $this->hasMany(UserInstitution::class);
+    }
 }

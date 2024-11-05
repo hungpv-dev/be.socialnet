@@ -17,7 +17,27 @@ class UserController extends Controller
     {
         $this->friendController = $friendController;
     }
+    //Lấy thông tin trang cá nhân người dùng
+    public function getProfile(Request $request)
+    {
+        if (!$request->id)
+            return $this->sendResponse(['message' => 'Đã có lỗi xảy ra!'], 404);
 
+        $user = User::select(['id', 'name', 'avatar', 'cover_avatar', 'follower', 'friend_counts', 'address', 'hometown', 'gender', 'birthday', 'relationship'])
+            ->where('id', $request->id)
+            ->where('is_active', 0)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (!$user) {
+            return $this->sendResponse(['message' => 'Không tìm thấy tài khoản!'], 404);
+        }
+
+        $user->friend_commons = $this->friendController->findCommonFriends(auth()->user()->id, $user->id);
+        $user->button = $this->friendController->checkFriendStatus($user->id);
+
+        return $this->sendResponse($user);
+    }
     public function updateProfile(Request $request)
     {
         if ($request->isMethod('PUT')) {
@@ -86,7 +106,7 @@ class UserController extends Controller
 
         if ($request->user()) {
             foreach ($data->items() as $friend) {
-                $friend->friend_common = $this->friendController->findCommonFriends($request->user()->id, $friend->id);
+                $friend->friend_commons = $this->friendController->findCommonFriends($request->user()->id, $friend->id);
                 $friend->button = $this->friendController->checkFriendStatus($friend->id);
             }
         }
