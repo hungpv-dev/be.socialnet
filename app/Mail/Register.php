@@ -14,10 +14,12 @@ class Register extends Mailable
     use Queueable, SerializesModels;
 
     public $user;
+    public $otp;
 
-    public function __construct($user)
+    public function __construct($user, $otp)
     {
         $this->user = $user;
+        $this->otp = $otp;
     }
 
     public function envelope(): Envelope
@@ -32,7 +34,8 @@ class Register extends Mailable
         return new Content(
             view: 'emails.register',
             with: [
-                'user' => $this->user
+                'user' => $this->user,
+                'otp'=> $this->otp
             ]
         );
     }
