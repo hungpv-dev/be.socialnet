@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 [2024-11-02 10:28:59] local.ERROR: syntax error, unexpected identifier "Route" {"exception":"[object] (ParseError(code: 0): syntax error, unexpected identifier \"Route\" at D:\\DoAn\\be.socialnet\\routes\\api.php:77)
 [stacktrace]
 #0 D:\\DoAn\\be.socialnet\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(511): Illuminate\\Routing\\RouteFileRegistrar->register('D:\\\\DoAn\\\\be.soci...')
@@ -1253,3 +1254,5 @@
 [stacktrace]
 #0 {main}
 "} 
+=======
+>>>>>>> 2ca7bada39b250110988fcbec91987b1aba7f169

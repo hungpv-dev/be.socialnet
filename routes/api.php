@@ -15,6 +15,7 @@ use App\Http\Controllers\{
     FriendController,
     FriendRequestController,
     MessageController,
+    StoryController
 };
 
 use Illuminate\Http\Request;
@@ -30,6 +31,7 @@ Route::prefix('password/')->group(function () {
 });
 
 Route::post('register', [RegisterController::class, 'register']);
+Route::post('/register', 'AuthController@register');
 
 Route::middleware('auth:api')->group(function () {
 
