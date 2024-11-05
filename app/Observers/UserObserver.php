@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Mail\Register;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -14,7 +15,14 @@ class UserObserver
      */
     public function created(User $user): void
     {
-        // Mail::to($user->email)->send(new Register($user));
+        $oldOtpKey = 'otp_verify_' . $user->email;
+        if (Cache::has($oldOtpKey)) {
+            Cache::forget($oldOtpKey);
+        }
+
+        $otp = random_int(100000, 999999);
+        Cache::put($oldOtpKey, $otp, now()->addMinutes(15));
+        Mail::to($user->email)->queue(new Register($user, $otp));
     }
 
     /**

@@ -8,5 +8,7 @@
 </head>
 <body>
     Xin chào: {{ $user->name }}
+    <br>
+    Otp: {{ $otp }}
 </body>
 </html>

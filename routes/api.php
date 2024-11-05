@@ -11,6 +11,7 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\{
     BlockController,
     ChatRoomController,
+    CommentControler,
     UserController,
     FriendController,
     FriendRequestController,
@@ -24,14 +25,16 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::post('register',[RegisterController::class,'register']);
+Route::post('register/verify', [RegisterController::class, 'verify']);
+
 Route::prefix('password/')->group(function () {
     Route::post('forgot', [ResetPasswordController::class, 'sendToken']);
     Route::post("check/token", [ResetPasswordController::class, 'checkToken']);
     Route::post("reset", [ResetPasswordController::class, 'resetPassword']);
 });
 
-Route::post('register', [RegisterController::class, 'register']);
-Route::post('/register', 'AuthController@register');
+// Route::post('register', [RegisterController::class, 'register']);
+// Route::post('/register', 'AuthController@register');
 
 Route::middleware('auth:api')->group(function () {
 
@@ -98,5 +101,14 @@ Route::middleware('auth:api')->group(function () {
         });
     });
 
+    Route::prefix('story/')->group(function () {
+        Route::get('{id}/viewer', [StoryController::class, 'getListViewer']);
+    });
+    Route::resource('story', StoryController::class);
     Route::resource('blocks', BlockController::class);
+
+    Route::resource('comments', CommentControler::class);
+
+
 });
+

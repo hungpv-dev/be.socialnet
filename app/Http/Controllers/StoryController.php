@@ -59,7 +59,9 @@ class StoryController extends Controller
      */
     public function show(string $id)
     {
-        return $this->sendResponse($id);
+        $story = Story::findOrFail($id);
+
+        return $this->sendResponse($story);
     }
 
     /**
@@ -131,6 +133,7 @@ class StoryController extends Controller
                     'seen' => false,
                 ]);
             }
+            //Gửi thông báo
 
             return $this->sendResponse(['message' => 'Đã cập nhật biểu cảm'], 200);
         }
