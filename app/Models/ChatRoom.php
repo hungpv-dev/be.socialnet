@@ -16,6 +16,8 @@ class ChatRoom extends Model
         'chat_type_id',
         'name',
         'user',
+        'avatar',
+        'outs',
         'admin',
         'last_remove',
         'last_active',
@@ -31,11 +33,16 @@ class ChatRoom extends Model
         'last_remove' => 'array',
         'notification' => 'array',
         'blocks' => 'array',
+        'outs' => 'array',
     ];
 
     public function lastMessage()
     {
         return $this->hasOne(Message::class, 'chat_room_id')->orderBy('id', 'desc');
+    }
+
+    public function messages(){
+        return $this->hasMany(Message::class,'chat_room_id');
     }
 
 

@@ -23,10 +23,12 @@ class MessageRepository
         try {
             $chat_room_id = $request->chat_room_id;
             $room = ChatRoom::whereJsonContains('user', 'user_' . $user_id)->findOrFail($chat_room_id);
+            $lastActive = $room->last_active['user_'.$user_id];
+            $lastRemove = $room->last_remove['user_'.$user_id] ?? now()->format('Y-m-d H:i:s');
             $messages = Message::where('chat_room_id', $room->id)
-                // ->whereJsonDoesntContain('flagged', 'user_' . $user_id)
                 ->with('user:id,name,avatar,is_online', 'replyTo','emotions:id,user_id,emotionable_id,emotionable_type,emoji') 
                 ->orderBy('id', 'desc')
+                ->whereBetween('created_at',[$lastActive,$lastRemove])
                 ->skip($index)
                 ->take(20)
                 ->get();

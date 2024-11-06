@@ -51,7 +51,7 @@ class MessageController extends Controller
                     'emoji' => $request->input('emojis')
                 ]);
             }
-            broadcast(new SendIcon($message->chat_room_id,$message));
+            broadcast(new SendIcon($message->chat_room_id,message: $message));
             return $this->sendResponse([
                 'message' => 'Thêm icon thành công!'
             ],201);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Laravel\Passport\RefreshToken;
 use Laravel\Passport\Token;
 
@@ -29,5 +30,9 @@ class LogoutController extends Controller
 
     private function revokeRefreshToken($tokenId){
         RefreshToken::whereIn('access_token_id', $tokenId)->update(['revoked' => true]);
+    }
+
+    public function changeStatus(Request $request){
+        Log::info('User id: '.$request->user_id);
     }
 }

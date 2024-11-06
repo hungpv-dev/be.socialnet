@@ -27,7 +27,7 @@ class CommentNotification implements ShouldBroadcast
         $this->message = $message;
         $this->comment_id = $comment_id;
 
-        // Log::info( '<b>' . auth()->user()->name . '</b>' . $message );
+        // Log::info( auth()->user()->name . $message . " tới " . $to_user );
     }
 
     /**

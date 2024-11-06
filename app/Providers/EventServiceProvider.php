@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Listeners\LogUserDevice;
+use App\Listeners\UserStatusListener;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Event;
 use Laravel\Passport\Events\AccessTokenCreated;
@@ -19,7 +20,6 @@ class EventServiceProvider extends ServiceProvider
             LogUserDevice::class,
         ],
     ];
-
     /**
      * Register any events for your application.
      */

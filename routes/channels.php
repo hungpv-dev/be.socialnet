@@ -20,3 +20,7 @@ Broadcast::channel('room.push-message.{roomId}', function ($user, $roomId) {
 Broadcast::channel('room.refresh-users.{userId}', function ($user, $userId) {
     return (int) $user->id === (int) $userId;
 });
+
+Broadcast::channel('user-online', function ($user) {
+    return $user;
+});
