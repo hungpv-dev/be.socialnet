@@ -117,9 +117,13 @@ Route::middleware(['auth:api'])->group(function () {
     });
     Route::resource('story', StoryController::class);
     Route::resource('blocks', BlockController::class);
+<<<<<<< HEAD
 
     Route::resource('comments', CommentControler::class);
 
 
 });
 
+=======
+    Route::resource('comments', CommentControler::class);
+>>>>>>> 423182321ffa1a583b9ec92b498264c56f578874
