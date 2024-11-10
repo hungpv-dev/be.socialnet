@@ -12,6 +12,7 @@ use App\Http\Controllers\{
     BlockController,
     ChatRoomController,
     CommentControler,
+    EmotionController,
     UserController,
     FriendController,
     FriendRequestController,
@@ -51,8 +52,19 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+    Route::get('/notifications', function (Request $request) {
+        $index = $request->input('index',0);
+        return $request->user()
+                    ->notifications()
+                    ->orderBy('updated_at','desc')
+                    ->skip($index)
+                    ->take(10)
+                    ->get();
+    });
 
     Route::apiResource('/posts',PostController::class);
+
+    Route::apiResource('/emotions',EmotionController::class);
 
 
     Route::post('/logout', [LogoutController::class, 'logout']);
@@ -120,3 +132,4 @@ Route::middleware(['auth:api'])->group(function () {
     Route::resource('story', StoryController::class);
     Route::resource('blocks', BlockController::class);
     Route::resource('comments', CommentControler::class);
+});

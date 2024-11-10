@@ -44,6 +44,7 @@ class FriendController extends Controller
 
         return ['add', 'chat'];
     }
+    
     //Tìm kiếm bạn bè
     public function findFriend(Request $request)
     {

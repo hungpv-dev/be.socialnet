@@ -39,11 +39,7 @@ class StoryController extends Controller
             } else {
                 return response()->json(['message' => 'File không hợp lệ'], 400);
             }
-        } else {
-            $data = [
-                "text" => $validatedData['data']
-            ];
-        }
+        } 
 
         Story::create([
             'user_id' => $request->user()->id,
