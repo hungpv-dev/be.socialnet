@@ -3,30 +3,56 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\PostResource;
+use App\Models\Friend;
 use App\Models\Post;
+use App\Models\User;
+use App\Notifications\CreatePost;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class PostController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $post = Post::query();
+        $user = Auth::user();
+
+        $ids = $request->input("ids",'');
+        $ids = explode(',', $ids);
 
         $post->with(
             'post_share',
             'post_share.user:id,name,avatar',
-            'user:id,name,avatar'
+            'user:id,name,avatar',
+            'user_emotion'
         );
-        $post->where('type','post');
+        
+        $friendIds = $this->getFriendIds($user);
+
+        $post->whereNotIn('id',$ids);
+        $post->whereIn('user_id',$friendIds);
+
+        $post->where('type','post')
+            ->whereIn('status',['public', 'friend'])
+            ->where('is_active','1');
         $post->orderBy('created_at', 'desc');
         
-        return $this->sendResponse(PostResource::collection($post->simplePaginate(5)));
+        return $this->sendResponse($post->take(5)->get());
+    }
+    public function getFriendIds($user){
+        $friendIds = Friend::where('user1', $user->id)->pluck('user2')
+            ->merge(Friend::where('user2', $user->id)->pluck('user1'))
+            ->unique()
+            ->reject(fn($id) => $id == $user->id);
+        return $friendIds;
     }
     public function store(Request $request)
     {
         $user_id = auth()->user()->id;
+        $user = Auth::user();
         $post = new Post();
         if ($request->has('share')) {
             $share = $request->input('share');
@@ -43,6 +69,19 @@ class PostController extends Controller
         $listFiles = (new FileController($request->file('files')))->posts();
         $post->data = $listFiles;
         $post->save();
+
+        $ids = $this->getFriendIds($user);
+        $users = User::whereIn('id', $ids)->get();
+        foreach($users as $friend) {
+            try {
+                $notification = new CreatePost($post, $user);
+                $friend->notify($notification);
+            } catch (\Exception $e) {
+                Log::error('Notification error: ' . $e->getMessage());
+                continue;
+            }
+        }
+        
 
         return $this->sendResponse([
             'data' => $post,

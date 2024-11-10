@@ -29,6 +29,14 @@ class Post extends Model
         return $this->belongsTo(User::class);
     }
     
+    public function emotions(){
+        return $this->morphMany(Emotion::class, 'emotionable');
+    }
+    public function user_emotion() {
+        return $this->morphOne(Emotion::class, 'emotionable')
+            ->where('user_id', auth()->id());
+    }
+
     public function post_share(){
         return $this->belongsTo(Post::class,'share_id');
     }
