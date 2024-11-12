@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\FriendNotification;
 use App\Models\FriendRequests;
 use App\Models\User;
 use App\Models\Friend;
+use App\Notifications\Friend\{
+    FriendNotification,
+    FriendRequestNotification
+};
 use Illuminate\Http\Request;
 
 class FriendRequestController extends Controller
@@ -48,18 +51,11 @@ class FriendRequestController extends Controller
             if ($existingRequest) {
                 return $this->sendResponse('Yêu cầu kết bạn đã tồn tại', 400);
             }
-
-            $sender = [
-                'id' => auth()->user()->id,
-                'name' => auth()->user()->name,
-                'avatar' => auth()->user()->avatar,
-            ];
-            $message = " đã gửi cho bạn lời mời kết bạn.";
-            broadcast(new FriendNotification($sender, $to_user, $message));
             FriendRequests::create([
                 'sender' => $user->id,
                 'receiver' => $to_user,
             ]);
+            $receiverUser->notify(new FriendRequestNotification());
             $receiverUser->follower++;
             $receiverUser->save();
 
@@ -67,7 +63,8 @@ class FriendRequestController extends Controller
         }
     }
     //Chấp nhận lời mời kết bạn
-    public function accept(Request $request) {
+    public function accept(Request $request)
+    {
         if ($request->method() == "POST") {
             $to_user = $request->id_account;
             $user = $request->user();
@@ -84,7 +81,7 @@ class FriendRequestController extends Controller
             // Kiểm tra mối quan hệ bạn bè
             $existingFriend = Friend::where(function ($query) use ($user, $to_user) {
                 $query->where('user1', min($user->id, $to_user))
-                      ->where('user2', max($user->id, $to_user));
+                    ->where('user2', max($user->id, $to_user));
             })->first();
 
             if ($existingFriend) {
@@ -101,19 +98,12 @@ class FriendRequestController extends Controller
             if (!$existingRequest) {
                 return $this->sendResponse('Không tìm thấy lời mời kết bạn', 400);
             }
-
-            $data = [
-                'id' => auth()->user()->id,
-                'name' => auth()->user()->name,
-                'avatar' => auth()->user()->avatar,
-            ];
-            $message = " đã chấp nhận lời mời kết bạn của bạn.";
-            broadcast(new FriendNotification($data, $to_user, $message));
             $existingRequest->delete();
             Friend::create([
                 'user1' => min($user->id, $to_user),
                 'user2' => max($user->id, $to_user)
             ]);
+            $sender->notify(new FriendNotification());
             $sender->follower++;
             $sender->friend_counts++;
             $sender->save();
@@ -172,8 +162,8 @@ class FriendRequestController extends Controller
             }
 
             $existingRequest = FriendRequests::where('sender', $user->id)
-                                             ->where('receiver', $to_user)
-                                             ->first();
+                ->where('receiver', $to_user)
+                ->first();
 
             if (!$existingRequest) {
                 return $this->sendResponse('Không tìm thấy lời mời kết bạn đã gửi', 400);
@@ -239,5 +229,4 @@ class FriendRequestController extends Controller
 
         return $this->sendResponse('Phương thức không được hỗ trợ', 405);
     }
-
 }

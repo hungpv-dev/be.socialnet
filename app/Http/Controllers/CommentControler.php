@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Post;
+
 use App\Models\Comment;
+use App\Models\Post;
+use App\Models\User;
+use App\Notifications\Comment\CommentPostNotification;
+use App\Notifications\Comment\RepCommentNotification;
 use Illuminate\Http\Request;
 use App\Events\CommentEvent\CommentNotification;
 
@@ -55,9 +59,18 @@ class CommentControler extends Controller
         $post = Post::find($comment->post_id);
         $post->comment_count++;
         $post->save();
-        // gui thong bao
-        $message = $comment->parent_id ? " đã phản hồi bình luận của bạn." : " đã bình luận về bài viết của bạn.";
-        broadcast(new CommentNotification($post->user_id, $message, $comment->id));
+        if ($comment->parent_id) {
+            $parentComment = Comment::find($comment->parent_id)->user_id;
+            $parentCommentUser = User::find($parentComment);
+            if ($parentCommentUser && $parentComment !== auth()->user()->id) {
+                $parentCommentUser->notify(new RepCommentNotification($post->id, $comment->id));
+            }
+        } else {
+            $postUser = User::find($post->user_id);
+            if ($postUser && $post->user_id !== auth()->user()->id) {
+                $postUser->notify(new CommentPostNotification($post->id, $comment->id));
+            }
+        }
 
         return response()->json(['message' => 'Bình luận thành công!'], 201);
     }
@@ -94,5 +107,32 @@ class CommentControler extends Controller
             $this->deleteChildrenComments($child->id);
             $child->delete();
         }
+    }
+    public function getComments(Request $request)
+    {
+        $type = $request->type;
+        if ($type === 'post') {
+            $post = Post::find($request->id);
+            if (!$post) {
+                return response()->json(['message' => 'Không tìm thấy bài viết!'], 404);
+            }
+            $commentsQuery = Comment::where('post_id', $request->id);
+        } elseif ($type === 'comment') {
+            $commentParent = Comment::find($request->id);
+            if (!$commentParent) {
+                return response()->json(['message' => 'Không tìm thấy bình luận!'], 404);
+            }
+            $commentsQuery = Comment::where('parent_id', $request->id);
+        } else {
+            return response()->json(['message' => 'Loại yêu cầu không hợp lệ!'], 400);
+        }
+
+        $comments = $commentsQuery
+            ->with(['user:id,name,avatar'])
+            ->select(['id', 'content', 'user_id'])
+            ->selectRaw('(SELECT COUNT(*) FROM comments AS child_comments WHERE child_comments.parent_id = comments.id) AS countChildren')
+            ->paginate(5);
+
+        return response()->json($comments);
     }
 }

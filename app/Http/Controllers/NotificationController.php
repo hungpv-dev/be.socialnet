@@ -2,20 +2,31 @@
 
 namespace App\Http\Controllers;
 
+
+use App\Models\Notification;
 use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
-    public function index(Request $request)
+    public function list(Request $request)
     {
-        $index = $request->input('index', 0);
-        $query = $request->user()->notifications();
-        if ($request->has('count')) {
-            return $this->sendResponse($query->whereNull('read_at')->count());
-        }
-        return $query->orderBy('updated_at', 'desc')
-            ->skip($index)
-            ->take(10)
-            ->get();
+        $data = $request->user()->notifications()->orderBy('updated_at', 'desc')->paginate(10);
+
+        $request->user()->notifications()->update(['is_seen' => 1]);
+
+        return response()->json($data);
+    }
+    public function read(Request $request)
+    {
+        $noti = Notification::find($request->id);
+        if ($noti) $noti->update(['is_read' => 1, 'is_seen' => 1]);
+
+        return response()->json(['message' => 'Thao tác thành công!']);
+    }
+    public function readAll(Request $request)
+    {
+        $request->user()->notifications()->update(['is_read' => 1, 'is_seen' => 1]);
+
+        return response()->json(['message' => 'Thao tác thành công!']);
     }
 }
