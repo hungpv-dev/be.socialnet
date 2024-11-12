@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\{
     ResetPasswordController
 };
 
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PostController;
 
 use App\Http\Controllers\{
@@ -52,15 +53,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
-    Route::get('/notifications', function (Request $request) {
-        $index = $request->input('index',0);
-        return $request->user()
-                    ->notifications()
-                    ->orderBy('updated_at','desc')
-                    ->skip($index)
-                    ->take(10)
-                    ->get();
-    });
+    Route::get('/notifications', [NotificationController::class,'index']);
 
     Route::apiResource('/posts',PostController::class);
 

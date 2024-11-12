@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\CommentEvent\CommentNotification;
-use App\Models\Comment;
 use App\Models\Post;
+use App\Models\Comment;
 use Illuminate\Http\Request;
+use App\Events\CommentEvent\CommentNotification;
 
 class CommentControler extends Controller
 {
