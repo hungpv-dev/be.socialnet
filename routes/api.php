@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\{
     ResetPasswordController
 };
 
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PostController;
 
 use App\Http\Controllers\{
@@ -30,7 +31,7 @@ use Illuminate\Support\Facades\Route;
 
 
 
-Route::post('register',[RegisterController::class,'register']);
+Route::post('register', [RegisterController::class, 'register']);
 Route::post('register/verify', [RegisterController::class, 'verify']);
 
 Route::prefix('password/')->group(function () {
@@ -53,18 +54,23 @@ Route::middleware(['auth:api'])->group(function () {
         return $request->user();
     });
     Route::get('/notifications', function (Request $request) {
-        $index = $request->input('index',0);
+        $index = $request->input('index', 0);
         return $request->user()
-                    ->notifications()
-                    ->orderBy('updated_at','desc')
-                    ->skip($index)
-                    ->take(10)
-                    ->get();
+            ->notifications()
+            ->orderBy('updated_at', 'desc')
+            ->skip($index)
+            ->take(10)
+            ->get();
+    });
+    Route::prefix('notifications')->group(function () {
+        Route::get('list', [NotificationController::class, 'list']);
+        Route::post('read', [NotificationController::class, 'read']);
+        Route::post('read/all', [NotificationController::class, 'readAll']);
     });
 
-    Route::apiResource('/posts',PostController::class);
+    Route::apiResource('/posts', PostController::class);
 
-    Route::apiResource('/emotions',EmotionController::class);
+    Route::apiResource('/emotions', EmotionController::class);
 
 
     Route::post('/logout', [LogoutController::class, 'logout']);
@@ -126,9 +132,13 @@ Route::middleware(['auth:api'])->group(function () {
         });
     });
 
-    Route::prefix('story/')->group(function () {
-        Route::get('{id}/viewer', [StoryController::class, 'getListViewer']);
+    Route::prefix('story/{id}/')->group(function () {
+        Route::get('viewer', [StoryController::class, 'getListViewer']);
+        Route::post('emotion', [StoryController::class, 'emotion']);
     });
+
+    Route::get('comments/by/{type}/{id}', [CommentControler::class, 'getComments']);
+
     Route::resource('story', StoryController::class);
     Route::resource('blocks', BlockController::class);
     Route::resource('comments', CommentControler::class);
