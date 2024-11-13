@@ -25,4 +25,9 @@ class Comment extends Model
     public function parent(){
         return $this->belongsTo(Comment::class,'parent_id');
     }
+    //Báo cáo bình luận
+    public function reports()
+    {
+        return $this->morphMany(Report::class, 'reportable');
+    }
 }

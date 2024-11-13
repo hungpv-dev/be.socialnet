@@ -6,20 +6,18 @@ use App\Http\Controllers\Auth\{
     ResetPasswordController
 };
 
-use App\Http\Controllers\PostController;
-
 use App\Http\Controllers\{
     BlockController,
     ChatRoomController,
-    CommentControler,
+    CommentController,
+    PostController,
     UserController,
     FriendController,
     FriendRequestController,
     MessageController,
+    ReportController,
     StoryController
 };
-use App\Models\User;
-use Illuminate\Auth\GenericUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Broadcast;
@@ -66,7 +64,7 @@ Route::middleware(['auth:api'])->group(function () {
         Route::get('/search', [ChatRoomController::class, 'search']);
         Route::get('/images/{id}', [ChatRoomController::class, 'images']);
         Route::post('/', [ChatRoomController::class, 'store']);
-        Route::get('/{id}', action: [ChatRoomController::class, 'show']);
+        Route::get('/{id}', [ChatRoomController::class, 'show']);
         Route::put('/{id}', [ChatRoomController::class, 'update']);
         Route::post('/notification/{id}', [ChatRoomController::class, 'notification']);
         Route::put('/send/{id}', [ChatRoomController::class, 'send']);
@@ -112,18 +110,18 @@ Route::middleware(['auth:api'])->group(function () {
         });
     });
 
+    Route::prefix('reports')->group(function(){
+        Route::get('type', [ReportController::class, 'getReportType']);
+        Route::get('list', [ReportController::class, 'myReport']);
+        Route::get('{id}', [ReportController::class, 'show']);
+        Route::post('add', [ReportController::class, 'add']);
+        Route::delete('{id}/destroy', [ReportController::class,'destroy']);
+    });
+
     Route::prefix('story/')->group(function () {
         Route::get('{id}/viewer', [StoryController::class, 'getListViewer']);
     });
     Route::resource('story', StoryController::class);
     Route::resource('blocks', BlockController::class);
-<<<<<<< HEAD
-
-    Route::resource('comments', CommentControler::class);
-
-
+    Route::resource('comments', CommentController::class);
 });
-
-=======
-    Route::resource('comments', CommentControler::class);
->>>>>>> 423182321ffa1a583b9ec92b498264c56f578874
