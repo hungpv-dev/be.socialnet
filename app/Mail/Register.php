@@ -9,15 +9,17 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class Register extends Mailable
+class Register extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
     public $user;
+    public $otp;
 
-    public function __construct($user)
+    public function __construct($user, $otp)
     {
         $this->user = $user;
+        $this->otp = $otp;
     }
 
     public function envelope(): Envelope
@@ -32,7 +34,8 @@ class Register extends Mailable
         return new Content(
             view: 'emails.register',
             with: [
-                'user' => $this->user
+                'user' => $this->user,
+                'otp'=> $this->otp
             ]
         );
     }

@@ -72,9 +72,14 @@ class User extends Authenticatable
         return $this->hasMany(Story::class);
     }
 
+    // public function reports()
+    // {
+    //     return $this->hasMany(Report::class);
+    // }
+    //Báo cáo người dùng
     public function reports()
     {
-        return $this->hasMany(Report::class);
+        return $this->morphMany(Report::class, 'reportable');
     }
 
     public function blocks()
@@ -85,5 +90,9 @@ class User extends Authenticatable
     public function friends()
     {
         return $this->belongsToMany(User::class, 'friends', 'user1', 'user2');
+    }
+    public function institutions()
+    {
+        return $this->hasMany(UserInstitution::class);
     }
 }

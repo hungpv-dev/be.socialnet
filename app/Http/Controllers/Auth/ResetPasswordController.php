@@ -39,14 +39,12 @@ class ResetPasswordController extends Controller
             'otp'   => 'required|numeric'
         ]);
     
-        // Kiểm tra OTP từ cache
         $cachedOTP = Cache::get('otp_' . $request->email);
     
         if (!$cachedOTP || $cachedOTP != $request->otp) {
             return response()->json(['message' => 'Invalid or expired OTP.'], 400);
         }
     
-        // OTP hợp lệ, có thể cho phép đặt lại mật khẩu
         return response()->json(true);
     }
     public function resetPassword(Request $request) {

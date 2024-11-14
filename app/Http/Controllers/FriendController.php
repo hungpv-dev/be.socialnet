@@ -4,17 +4,26 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Friend;
+use App\Models\ChatRoom;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use App\Models\FriendRequests;
+use App\Http\Controllers\Controller;
+use App\Models\Block;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Log;
 
 class FriendController extends Controller
 {
+    protected $blockController;
+    public function __construct(BlockController $blockController)
+    {
+        $this->blockController = $blockController;
+    }
     public function checkFriendStatus($user)
     {
         $mine = auth()->user()->id;
         if ($mine == $user) {
-            return ['Thêm vào tin', 'Chỉnh sửa trang cá nhân'];
+            return ['add_story', 'edit_profile'];
         }
 
         $friendship = Friend::where(function ($query) use ($user, $mine) {
@@ -23,18 +32,19 @@ class FriendController extends Controller
         })->first();
 
         if ($friendship) {
-            return ['Bạn bè', 'Nhắn tin'];
+            return ['friend', 'chat'];
         }
 
         if (FriendRequests::where('sender', $mine)->where('receiver', $user)->first()) {
-            return ['Hủy kết bạn', 'Nhắn tin'];
+            return ['delete', 'chat'];
         }
         if (FriendRequests::where('sender', $user)->where('receiver', $mine)->first()) {
-            return ['Chấp nhận', 'Từ chối', 'Nhắn tin'];
+            return ['accept', 'reject', 'chat'];
         }
 
-        return ['Thêm bạn bè', 'Nhắn tin'];
+        return ['add', 'chat'];
     }
+    
     //Tìm kiếm bạn bè
     public function findFriend(Request $request)
     {
@@ -54,7 +64,7 @@ class FriendController extends Controller
         $query = User::whereIn('id', $friendIds)
             ->where('is_active', 0)
             ->whereNull('deleted_at')
-            ->select('id', 'name', 'address', 'hometown', 'gender', 'relationship', 'follower', 'friend_counts', 'is_online')
+            ->select('id', 'name','avatar', 'address', 'hometown', 'gender', 'relationship', 'follower', 'friend_counts', 'is_online')
             ->where('name', 'LIKE', "%" . $request->name . "%")
             ->whereNotIn('id', function ($subQuery) use ($user) {
                 $subQuery->select('user_block')->from('blocks')->where('user_is_blocked', $user->id);
@@ -86,7 +96,6 @@ class FriendController extends Controller
 
         return $this->sendResponse($data);
     }
-
     // Xóa mối quan hệ bạn bè
     public function removeFriend(Request $request)
     {
@@ -130,48 +139,34 @@ class FriendController extends Controller
     // Lấy danh sách bạn bè
     public function getFriendList(Request $request)
     {
-        if ($request->method() == "GET") {
-            $user = $request->user();
-            $sort = $request->input('sort', 'desc');
-            $perPage = $request->input('per_page', 10);
+        $userId = $request->id;
+        if (!$userId) return $this->sendResponse(['message' => 'Đã có lỗi xảy ra!'], 404);
+        $sort = $request->input('sort', 'desc');
+        $perPage = $request->input('per_page', 10);
 
-            if (!in_array($sort, ['asc', 'desc'])) {
-                $sort = 'desc';
-            }
+        $listFriend = Friend::where('user1', $userId)
+            ->pluck('user2')
+            ->merge(Friend::where('user2', $userId)->pluck('user1'))
+            ->unique()
+            ->values();
 
-            $friends = Friend::where(function ($query) use ($user) {
-                $query->where('user1', $user->id)
-                    ->orWhere('user2', $user->id);
-            })
-                ->with(['user1:id,name,avatar', 'user2:id,name,avatar'])
-                ->orderBy('created_at', $sort)
-                ->paginate($perPage);
+        $listBlock = $this->blockController->listBlockId();
 
-            $friendsList = $friends->map(function ($friendship) use ($user) {
-                if (!is_object($friendship->user1) || !is_object($friendship->user2)) {
-                    return null;
-                }
+        $data = User::where('id', '!=', $userId)
+            ->where('is_active', 0)
+            ->whereNull('deleted_at')
+            ->whereIn('id', $listFriend)
+            ->whereNotIn('id', $listBlock)
+            ->select(['id', 'name', 'address', 'hometown', 'relationship', 'follower', 'friend_counts'])
+            ->orderBy('id', $sort)
+            ->paginate($perPage);
 
-                $friend = $friendship->user1->id === $user->id ? $friendship->user2 : $friendship->user1;
-
-                return [
-                    'id' => $friend->id,
-                    'name' => $friend->name,
-                    'avatar' => $friend->avatar,
-                    'created_at' => $friendship->created_at,
-                ];
-            })->filter();
-
-            return $this->sendResponse([
-                'friends' => $friends->values(),
-                'total' => $friends->total(),
-                'current_page' => $friends->currentPage(),
-                'last_page' => $friends->lastPage(),
-                'per_page' => $friends->perPage(),
-            ]);
+        foreach ($data->items() as $item) {
+            $item->friend_common = $this->findCommonFriends(auth()->user()->id, $item->id);
+            $item->button = $this->checkFriendStatus($item->id);
         }
 
-        return $this->sendResponse('Phương thức không được hỗ trợ', 405);
+        return $this->sendResponse($data);
     }
     // Gợi ý lời mời kết bạn
     public function getSuggestFriends(Request $request)
@@ -219,6 +214,26 @@ class FriendController extends Controller
             ->unique()
             ->values();
 
+        //Lấy danh sách ID của những người dùng khác ở chung trong đoạn chat
+        $friendsInChatRoomIds = collect();
+
+        foreach (
+            ChatRoom::whereJsonContains('user', 'user_' . $user->id)
+                ->select('user')
+                ->get() as $value
+        ) {
+            // Giải mã chuỗi JSON thành mảng PHP
+            $decodedUsers = collect(json_decode($value, true))->values();
+            foreach ($decodedUsers as $decode) {
+                for ($i = 0; $i < count($decode); $i++) {
+                    if ($decode[$i] == 'user_' . auth()->user()->id) continue;
+                    $friendsInChatRoomIds = $friendsInChatRoomIds->merge(str_replace('user_', '', $decode[$i]));
+                }
+            }
+        }
+
+        $friendsInChatRoomIds = array_map('intval', explode(", ", implode(", ", $friendsInChatRoomIds->unique()->values()->toArray())));
+
         // Danh sách ID gợi ý kết bạn kết hợp các điều kiện trên
         $arraySuggestIds = $friendsWithSameAddressIds
             ->merge($friendsWithSameHometownIds)
@@ -230,18 +245,79 @@ class FriendController extends Controller
         // Danh sách ID cần loại trừ (bạn bè và các yêu cầu kết bạn)
         $arrayNotSuggestIds = $friendIds
             ->merge($friendRequestIds)
+            ->merge($this->blockController->listBlockId())
             ->unique()
             ->values();
 
-        // Lấy tất cả người dùng gợi ý
-        $allSuggestedFriends = User::whereNotIn('id', $arrayNotSuggestIds)
-            ->whereIn('id', $arraySuggestIds)
-            ->select(['id', 'name', 'avatar'])
-            ->paginate($perPage);
+        //Nếu danh sách gợi ý ít hơn 10 thì sẽ lấy thêm những người dùng khác
+        if ($arraySuggestIds->count() < 10) {
+            $remainingUserIds = User::where('is_active', 0)
+                ->whereNull('deleted_at')
+                ->whereNotIn('id', $arraySuggestIds->merge($arrayNotSuggestIds))
+                ->pluck('id')
+                ->unique()
+                ->values();
 
-        return $this->sendResponse($allSuggestedFriends);
+            $arraySuggestIds = $arraySuggestIds->merge($remainingUserIds);
+        }
+
+        // Lấy tất cả người dùng gợi ý
+        $allSuggestedFriends = User::where('is_active', 0)
+            ->whereNull('deleted_at')
+            ->where('id', '!=', $request->user()->id)
+            ->whereNotIn('id', $arrayNotSuggestIds)
+            ->whereIn('id', $arraySuggestIds)
+            ->select(['id', 'name', 'avatar', 'address', 'hometown', 'follower', 'friend_counts'])
+            ->get();
+
+        // Thêm số bạn chung vào mỗi mục trong danh sách và xáo trộn
+        $allSuggestedFriends = $allSuggestedFriends->map(function ($item) use ($request) {
+            $item->friend_commons = $this->findCommonFriends($request->user()->id, $item->id);
+            return $item;
+        })->shuffle();
+
+        // Thực hiện phân trang thủ công
+        $currentPage = LengthAwarePaginator::resolveCurrentPage();
+        $perPage = $perPage ?? 10;  // Số mục mỗi trang (bạn có thể thay đổi giá trị này)
+        $currentItems = $allSuggestedFriends->slice(($currentPage - 1) * $perPage, $perPage)->values();
+        $paginatedSuggestedFriends = new LengthAwarePaginator(
+            $currentItems,
+            $allSuggestedFriends->count(),
+            $perPage,
+            $currentPage,
+            ['path' => LengthAwarePaginator::resolveCurrentPath()]
+        );
+
+        return $this->sendResponse($paginatedSuggestedFriends);
     }
 
+    //Danh sách bạn chung
+    public function listCommonFriends(Request $request)
+    {
+        $userId = $request->user()->id;
+        $accountId = $request->id;
+        if (!$accountId || $userId == $accountId) {
+            return $this->sendResponse(['message' => 'Đã có lỗi xảy ra!'], 404);
+        }
+
+        $list = $this->findCommonFriends($userId, $accountId);
+
+        $listBlock = $this->blockController->listBlockId();
+
+        $data = User::where('id', '!=', $userId)
+            ->where('is_active', 0)
+            ->whereNull('deleted_at')
+            ->whereIn('id', $list)
+            ->whereNotIn('id', $listBlock)
+            ->select(['id', 'name', 'avatar', 'is_online', 'address', 'hometown', 'follower', 'friend_counts'])
+            ->paginate(10);
+
+        foreach ($data->items() as $item) {
+            $item->friend_commons = $this->findCommonFriends($userId, $item->id);
+        }
+
+        return $this->sendResponse($data);
+    }
 
     public function findCommonFriends($user1, $user2)
     {

@@ -40,4 +40,9 @@ class Message extends Model
     public function replyTo(){
         return $this->belongsTo(Message::class, 'reply_to');
     }
+    //Báo cáo tin nhắn
+    public function reports()
+    {
+        return $this->morphMany(Report::class, 'reportable');
+    }
 }

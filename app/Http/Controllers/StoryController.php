@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Story;
+use App\Models\User;
 use App\Models\UserStories;
+use App\Notifications\Story\EmotionNotification;
 use Illuminate\Http\Request;
 
 class StoryController extends Controller
@@ -39,10 +41,6 @@ class StoryController extends Controller
             } else {
                 return response()->json(['message' => 'File không hợp lệ'], 400);
             }
-        } else {
-            $data = [
-                "text" => $validatedData['data']
-            ];
         }
 
         Story::create([
@@ -59,7 +57,9 @@ class StoryController extends Controller
      */
     public function show(string $id)
     {
-        return $this->sendResponse($id);
+        $story = Story::findOrFail($id);
+
+        return $this->sendResponse($story);
     }
 
     /**
@@ -117,23 +117,61 @@ class StoryController extends Controller
         ]);
 
         if ($request->user()->id !== $story->user_id) {
-            $emotion = $story->emotions()->where('user_id', $request->user()->id)->first();
+            // Kiểm tra xem người dùng đã tương tác với câu chuyện này chưa
+            $emotion = UserStories::where('user_id', $request->user()->id)
+                ->where('story_id', $story->id)
+                ->first();
 
+            // Nếu chưa có cảm xúc, tạo mới
             if (!$emotion) {
-                $story->emotions()->create([
+                UserStories::create([
+                    'story_id' => $story->id,
                     'user_id' => $request->user()->id,
                     'emoji' => $request->emoji,
                     'seen' => false,
                 ]);
-            } else if ($request->emoji !== null && $emotion->emoji !== $request->emoji) {
+                $story->user_count++;
+            } elseif ($request->emoji !== '') { // Xử lý khi emoji không phải null hoặc chuỗi rỗng
                 $emotion->update([
                     'emoji' => $request->emoji,
                     'seen' => false,
                 ]);
             }
 
+            // Cập nhật thông báo nếu emoji được chọn
+            $existingNotification = $story->user->notifications()
+                ->where('data->story_id', $story->id)
+                ->first();
+
+            if ($existingNotification) {
+                // Nếu có thông báo cũ, cập nhật thông báo
+                $emotionCount = UserStories::where('story_id', $story->id)->whereNotNull('emoji')->count();
+                $message = $emotionCount > 1
+                    ? 'và những người khác đã bày tỏ cảm xúc về tin của bạn.'
+                    : 'đã bày tỏ cảm xúc về tin của bạn.';
+
+                $existingNotification->update([
+                    'data' => [
+                        'story_id' => $story->id,
+                        'avatar' => auth()->user()->avatar,
+                        'message' => '<b>' . auth()->user()->name . '</b> ' . $message,
+                    ]
+                ]);
+            } else {
+                // Nếu không có thông báo, gửi thông báo mới
+                $emotionCount = UserStories::where('story_id', $story->id)->whereNotNull('emoji')->count();
+                $message = $emotionCount > 1
+                    ? 'và những người khác đã bày tỏ cảm xúc về tin của bạn.'
+                    : 'đã bày tỏ cảm xúc về tin của bạn.';
+
+                $story->user->notify(new EmotionNotification($story->id, $message));
+            }
+
+            $story->save();
+
             return $this->sendResponse(['message' => 'Đã cập nhật biểu cảm'], 200);
         }
+
 
         return $this->sendResponse(['message' => 'Bạn không thể thêm biểu cảm vào tin của chính mình'], 403);
     }
