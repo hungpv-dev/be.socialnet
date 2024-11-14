@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Notifications\Comment\CommentPostNotification;
 use App\Notifications\Comment\RepCommentNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class CommentControler extends Controller
 {
@@ -76,10 +77,64 @@ class CommentControler extends Controller
     {
         //
     }
-    public function update(Request $request, string $id)
+    public function update(Request $request, $id)
     {
-        //
+        // Kiểm tra xem bình luận có tồn tại không
+        $comment = Comment::find($id);
+        if (!$comment) {
+            return response()->json(['message' => 'Bình luận không tồn tại'], 404);
+        }
+
+        // Kiểm tra xem người dùng có quyền chỉnh sửa bình luận (chỉ người tạo bình luận mới có thể chỉnh sửa)
+        if ($comment->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Bạn không có quyền chỉnh sửa bình luận này'], 403);
+        }
+
+        // Kiểm tra nếu có tệp đính kèm và xử lý
+        $data = json_decode($comment->content, true);  // Lấy dữ liệu cũ
+        if ($request->hasFile('content')) {
+            $file = $request->file('content');
+
+            // Kiểm tra kích thước và tính hợp lệ của file
+            if ($file->getSize() > 2048000) { // 2MB
+                return response()->json(['message' => 'Kích thước tệp quá lớn'], 400);
+            }
+            if (!$file->isValid()) {
+                return response()->json(['message' => 'File không hợp lệ'], 400);
+            }
+
+            $mimeType = $file->getMimeType();
+            if (strpos($mimeType, 'image/') === 0) {
+                // Xóa file cũ nếu có
+                if (isset($data['image'])) {
+                    $this->deleteFile($data['image']);
+                }
+                $path = $file->store('comments/images', 'public');
+                $data['image'] = url('storage/' . $path);
+            } else if (strpos($mimeType, 'video/') === 0) {
+                // Xóa file cũ nếu có
+                if (isset($data['video'])) {
+                    $this->deleteFile($data['video']);
+                }
+                $path = $file->store('comments/videos', 'public');
+                $data['video'] = url('storage/' . $path);
+            } else {
+                return response()->json(['message' => 'File phải là hình ảnh hoặc video'], 400);
+            }
+        }
+
+        // Cập nhật nội dung văn bản (nếu có)
+        if ($request->content) {
+            $data['text'] = $request->content;
+        }
+        
+        // Cập nhật bình luận
+        $comment->content = json_encode($data);
+        $comment->save();
+
+        return response()->json(['message' => 'Bình luận đã được cập nhật thành công'], 200);
     }
+
     public function destroy(string $id)
     {
         $comment = Comment::find($id);

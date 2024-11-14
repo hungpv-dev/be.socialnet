@@ -72,9 +72,14 @@ class User extends Authenticatable
         return $this->hasMany(Story::class);
     }
 
+    // public function reports()
+    // {
+    //     return $this->hasMany(Report::class);
+    // }
+    //Báo cáo người dùng
     public function reports()
     {
-        return $this->hasMany(Report::class);
+        return $this->morphMany(Report::class, 'reportable');
     }
 
     public function blocks()

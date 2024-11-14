@@ -40,4 +40,9 @@ class Post extends Model
     public function post_share(){
         return $this->belongsTo(Post::class,'share_id');
     }
+    //Báo cáo bài  viết
+    public function reports()
+    {
+        return $this->morphMany(Report::class, 'reportable');
+    }
 }
