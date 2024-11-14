@@ -20,4 +20,9 @@ class Story extends Model
     public function user(){
         return $this->belongsTo(User::class);
     }
+    //Báo cáo tin
+    public function reports()
+    {
+        return $this->morphMany(Report::class, 'reportable');
+    }
 }

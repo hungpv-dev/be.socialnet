@@ -50,4 +50,9 @@ class ChatRoom extends Model
     {
         return $this->belongsTo(ChatType::class);
     }
+    //Báo cáo cuộc hội thoại
+    public function reports()
+    {
+        return $this->morphMany(Report::class, 'reportable');
+    }
 }

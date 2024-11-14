@@ -32,4 +32,9 @@ class Comment extends Model
     {
         return $this->hasMany(Comment::class, 'parent_id');
     }
+    //Báo cáo bình luận
+    public function reports()
+    {
+        return $this->morphMany(Report::class, 'reportable');
+    }
 }

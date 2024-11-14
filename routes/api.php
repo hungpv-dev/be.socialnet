@@ -6,22 +6,20 @@ use App\Http\Controllers\Auth\{
     ResetPasswordController
 };
 
-use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\PostController;
-
 use App\Http\Controllers\{
     BlockController,
     ChatRoomController,
     CommentControler,
     EmotionController,
+    CommentController,
+    PostController,
     UserController,
     FriendController,
     FriendRequestController,
     MessageController,
-    StoryController
+    StoryController,
+    NotificationController,
 };
-use App\Models\User;
-use Illuminate\Auth\GenericUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Broadcast;
@@ -75,7 +73,7 @@ Route::middleware(['auth:api'])->group(function () {
         Route::get('/search', [ChatRoomController::class, 'search']);
         Route::get('/images/{id}', [ChatRoomController::class, 'images']);
         Route::post('/', [ChatRoomController::class, 'store']);
-        Route::get('/{id}', action: [ChatRoomController::class, 'show']);
+        Route::get('/{id}', [ChatRoomController::class, 'show']);
         Route::put('/{id}', [ChatRoomController::class, 'update']);
         Route::post('/notification/{id}', [ChatRoomController::class, 'notification']);
         Route::put('/send/{id}', [ChatRoomController::class, 'send']);
