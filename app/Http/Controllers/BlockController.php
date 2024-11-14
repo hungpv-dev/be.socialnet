@@ -34,7 +34,7 @@ class BlockController extends Controller
         $currentUser = $request->user();
         $userToBlock = User::find($request->id_account);
 
-        if(!$userToBlock){
+        if (!$userToBlock) {
             return $this->sendResponse(['message' => 'Người dùng không tồn tại.',], 422);
         }
 
@@ -42,7 +42,7 @@ class BlockController extends Controller
             return $this->sendResponse(['message' => 'Không thể tự chặn chính mình.',], 422);
         }
 
-        if(Block::where('user_block', $currentUser->id)->where('user_is_blocked', $userToBlock->id)->exists()){
+        if (Block::where('user_block', $currentUser->id)->where('user_is_blocked', $userToBlock->id)->exists()) {
             return $this->sendResponse(['message' => 'Người dùng đã bị chặn từ trước.']);
         }
 
@@ -79,8 +79,8 @@ class BlockController extends Controller
         $userToUnblock = User::findOrFail($id);
 
         $block = Block::where('user_block', $currentUser->id)
-                      ->where('user_is_blocked', $userToUnblock->id)
-                      ->first();
+            ->where('user_is_blocked', $userToUnblock->id)
+            ->first();
 
         if (!$block) {
             return $this->sendResponse(['message' => 'Không tìm thấy thông tin chặn người dùng.'], 404);
@@ -89,5 +89,21 @@ class BlockController extends Controller
         $block->delete();
 
         return $this->sendResponse(['message' => 'Bỏ chặn người dùng thành công.']);
+    }
+    public function listBlockId()
+    {
+        $blockedMeIds = Block::where('user_block', auth()->user()->id)
+            ->pluck('user_is_blocked')
+            ->unique()
+            ->values();
+
+        $iBlockedIds = Block::where('user_is_blocked', auth()->user()->id)
+            ->pluck('user_block')
+            ->unique()
+            ->values();
+
+        $allBlockedIds = $blockedMeIds->merge($iBlockedIds)->unique()->values();
+
+        return $allBlockedIds;
     }
 }

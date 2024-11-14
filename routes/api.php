@@ -9,14 +9,16 @@ use App\Http\Controllers\Auth\{
 use App\Http\Controllers\{
     BlockController,
     ChatRoomController,
+    CommentControler,
+    EmotionController,
     CommentController,
     PostController,
     UserController,
     FriendController,
     FriendRequestController,
     MessageController,
-    ReportController,
-    StoryController
+    StoryController,
+    NotificationController,
 };
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -27,7 +29,7 @@ use Illuminate\Support\Facades\Route;
 
 
 
-Route::post('register',[RegisterController::class,'register']);
+Route::post('register', [RegisterController::class, 'register']);
 Route::post('register/verify', [RegisterController::class, 'verify']);
 
 Route::prefix('password/')->group(function () {
@@ -49,8 +51,24 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+    Route::get('/notifications', function (Request $request) {
+        $index = $request->input('index', 0);
+        return $request->user()
+            ->notifications()
+            ->orderBy('updated_at', 'desc')
+            ->skip($index)
+            ->take(10)
+            ->get();
+    });
+    Route::prefix('notifications')->group(function () {
+        Route::get('list', [NotificationController::class, 'list']);
+        Route::post('read', [NotificationController::class, 'read']);
+        Route::post('read/all', [NotificationController::class, 'readAll']);
+    });
 
-    Route::apiResource('/posts',PostController::class);
+    Route::apiResource('/posts', PostController::class);
+
+    Route::apiResource('/emotions', EmotionController::class);
 
 
     Route::post('/logout', [LogoutController::class, 'logout']);
@@ -82,8 +100,9 @@ Route::middleware(['auth:api'])->group(function () {
     Route::prefix('friend/')->group(function () {
         Route::post('find', [FriendController::class, 'findFriend']);
         Route::delete('remove', [FriendController::class, 'removeFriend']);
-        Route::get('list', [FriendController::class, 'getFriendList']);
+        Route::get('list/{id}', [FriendController::class, 'getFriendList']);
         Route::get('suggest', [FriendController::class, 'getSuggestFriends']);
+        Route::get('common/list/{id}', [FriendController::class, 'listCommonFriends']);
 
         Route::prefix('request/')->group(function () {
             Route::post('add', [FriendRequestController::class, 'add']);
@@ -97,6 +116,7 @@ Route::middleware(['auth:api'])->group(function () {
 
     Route::prefix('user/')->group(function () {
         Route::post('find', [UserController::class, 'findUser']);
+        Route::get('{id}', [UserController::class, 'getProfile']);
         Route::put('profile/update', [UserController::class, 'updateProfile']);
         Route::prefix('avatar/')->group(function () {
             Route::post('update', [UserController::class, 'updateAvatar']);
@@ -110,18 +130,14 @@ Route::middleware(['auth:api'])->group(function () {
         });
     });
 
-    Route::prefix('reports')->group(function(){
-        Route::get('type', [ReportController::class, 'getReportType']);
-        Route::get('list', [ReportController::class, 'myReport']);
-        Route::get('{id}', [ReportController::class, 'show']);
-        Route::post('add', [ReportController::class, 'add']);
-        Route::delete('{id}/destroy', [ReportController::class,'destroy']);
+    Route::prefix('story/{id}/')->group(function () {
+        Route::get('viewer', [StoryController::class, 'getListViewer']);
+        Route::post('emotion', [StoryController::class, 'emotion']);
     });
 
-    Route::prefix('story/')->group(function () {
-        Route::get('{id}/viewer', [StoryController::class, 'getListViewer']);
-    });
+    Route::get('comments/by/{type}/{id}', [CommentControler::class, 'getComments']);
+
     Route::resource('story', StoryController::class);
     Route::resource('blocks', BlockController::class);
-    Route::resource('comments', CommentController::class);
+    Route::resource('comments', CommentControler::class);
 });
