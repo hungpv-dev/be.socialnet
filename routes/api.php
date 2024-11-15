@@ -6,6 +6,8 @@ use App\Http\Controllers\Auth\{
     ResetPasswordController
 };
 
+use App\Http\Controllers\Admin;
+
 use App\Http\Controllers\{
     BlockController,
     ChatRoomController,
@@ -141,4 +143,8 @@ Route::middleware(['auth:api'])->group(function () {
     Route::resource('story', StoryController::class);
     Route::resource('blocks', BlockController::class);
     Route::resource('comments', CommentControler::class);
+});
+
+Route::prefix('admin')->group(function(){
+    Route::resource('reports/type', Admin\ReportTypeController::class);
 });
