@@ -15,12 +15,17 @@ use Illuminate\Support\Facades\Log;
 
 class PostController extends Controller
 {
+    public $friendController;
+    public function __construct(FriendController $friendController)
+    {
+        $this->friendController = $friendController;
+    }
     public function index(Request $request)
     {
         $post = Post::query();
         $user = Auth::user();
 
-        $ids = $request->input("ids",'');
+        $ids = $request->input("ids", '');
         $ids = explode(',', $ids);
 
         $post->with(
@@ -29,20 +34,21 @@ class PostController extends Controller
             'user:id,name,avatar',
             'user_emotion'
         );
-        
+
         $friendIds = $this->getFriendIds($user);
 
-        $post->whereNotIn('id',$ids);
-        $post->whereIn('user_id',$friendIds);
+        $post->whereNotIn('id', $ids);
+        $post->whereIn('user_id', $friendIds);
 
-        $post->where('type','post')
-            ->whereIn('status',['public', 'friend'])
-            ->where('is_active','1');
+        $post->where('type', 'post')
+            ->whereIn('status', ['public', 'friend'])
+            ->where('is_active', '1');
         $post->orderBy('created_at', 'desc');
-        
+
         return $this->sendResponse($post->take(5)->get());
     }
-    public function getFriendIds($user){
+    public function getFriendIds($user)
+    {
         $friendIds = Friend::where('user1', $user->id)->pluck('user2')
             ->merge(Friend::where('user2', $user->id)->pluck('user1'))
             ->unique()
@@ -72,7 +78,7 @@ class PostController extends Controller
 
         $ids = $this->getFriendIds($user);
         $users = User::whereIn('id', $ids)->get();
-        foreach($users as $friend) {
+        foreach ($users as $friend) {
             try {
                 $notification = new CreatePost($post, $user);
                 $friend->notify($notification);
@@ -81,14 +87,43 @@ class PostController extends Controller
                 continue;
             }
         }
-        
+
 
         return $this->sendResponse([
             'data' => $post,
             'message' => 'Thêm mới bài viết thành công!'
         ], 200);
     }
-    
+    public function show($id)
+    {
+        try {
+            $post = Post::with(
+                'post_share',
+                'post_share.user:id,name,avatar',
+                'user:id,name,avatar',
+                'user_emotion'
+            )
+                ->where('id', $id)
+                ->where('type', 'post')
+                ->firstOrFail();
+
+            if (auth()->user()->id == $post->user_id) {
+                $allowedStatuses = ['private', 'public', 'friend'];
+            } elseif ($this->friendController->checkFriendStatus($post->user_id) == ["friend", "chat"]) {
+                $allowedStatuses = ['public', 'friend'];
+            } else {
+                $allowedStatuses = ['public'];
+            }
+
+            if (!in_array($post->status, $allowedStatuses)) {
+                return response()->json(['message' => 'Bạn không có quyền truy cập bài viết này!'], 403);
+            }
+
+            return response()->json($post);
+        } catch (ModelNotFoundException $th) {
+            return response()->json(['message' => 'Không tìm thấy bài viết!'], 404);
+        }
+    }
     public function update(Request $request, $id)
     {
         try {
@@ -115,11 +150,12 @@ class PostController extends Controller
         } catch (AuthorizationException $e) {
             return $this->sendResponse([
                 'message' => 'Bạn không phải tác giả của bài viết này!'
-            ], 403); 
+            ], 403);
         }
     }
 
-    public function destroy(Post $post){
+    public function destroy(Post $post)
+    {
         try {
             $this->authorize('destroy', $post);
             $post->delete();
@@ -130,7 +166,32 @@ class PostController extends Controller
         } catch (AuthorizationException $e) {
             return $this->sendResponse([
                 'message' => 'Bạn không phải tác giả của bài viết này!'
-            ], 403); 
+            ], 403);
         }
+    }
+    public function getPostByUser($id)
+    {
+        $posts = Post::with(
+            'post_share',
+            'post_share.user:id,name,avatar',
+            'user:id,name,avatar',
+            'user_emotion'
+        )
+            ->where('user_id', $id)
+            ->where('type', 'post')
+            ->where('is_active', '1');
+
+        if (auth()->user()->id == $id)
+            $posts = $posts->whereIn('status', ['private', 'public', 'friend']);
+        else if (auth()->user()->id != $id && $this->friendController->checkFriendStatus($id) == ["friend", "chat"])
+            $posts = $posts->whereIn('status', ['public', 'friend']);
+        else
+            $posts = $posts->where('status', 'public');
+
+        $posts = $posts->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
+        return response()->json($posts);
     }
 }

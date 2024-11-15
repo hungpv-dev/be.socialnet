@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ResetPassword\SendOTP;
 use App\Models\ResetPassword;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class ResetPasswordController extends Controller
@@ -24,10 +26,10 @@ class ResetPasswordController extends Controller
         
         $otp = rand(100000, 999999);
         // Lưu mã OTP vào cache với thời gian hết hạn (ví dụ: 10 phút)
-        $cache = Cache::put('otp_' . $request->email, $otp, now()->addMinutes(10));
+        Cache::put('otp_' . $request->email, $otp, now()->addMinutes(10));
         //Thực hiện gửi token cho người dùng tại đây
+        Mail::to($user->email)->queue(new SendOTP($user, $otp));
 
-        return $this->sendResponse($otp);
         return $this->sendResponse("OTP đã được gửi!");
     }
     public function checkToken(Request $request)

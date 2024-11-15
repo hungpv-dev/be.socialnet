@@ -66,6 +66,7 @@ Route::middleware(['auth:api'])->group(function () {
         Route::post('read/all', [NotificationController::class, 'readAll']);
     });
 
+    Route::get('/posts/by/user/{id}', [PostController::class, 'getPostByUser']);
     Route::apiResource('/posts', PostController::class);
 
     Route::apiResource('/emotions', EmotionController::class);
