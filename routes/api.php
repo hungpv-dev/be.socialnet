@@ -47,7 +47,6 @@ Route::middleware(['auth:api'])->group(function () {
         return Broadcast::auth($request);
     });
 
-
     Route::get('/user', function (Request $request) {
         return $request->user();
     });

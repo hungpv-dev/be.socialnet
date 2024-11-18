@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Story;
 use App\Models\User;
+use App\Models\Story;
 use App\Models\UserStories;
-use App\Notifications\Story\EmotionNotification;
 use Illuminate\Http\Request;
+use App\Notifications\Story\EmotionNotification;
+use Illuminate\Support\Facades\Auth;
 
 class StoryController extends Controller
 {
@@ -15,7 +16,32 @@ class StoryController extends Controller
      */
     public function index()
     {
-        //
+        $user = Auth::user();
+        $friendIds = (new PostController)->getFriendIds($user);
+        $friendStories = User::whereIn('id', $friendIds)
+            ->whereHas('stories', function($query) {
+                $query->where('created_at', '>=', now()->subHours(24))
+                    ->where('status', '!=', 'private');
+            })
+            ->with(['stories' => function($query) {
+                $query->where('created_at', '>=', now()->subHours(24))
+                    ->where('status', '!=', 'private')
+                    ->orderBy('created_at', 'asc');
+            }, 'stories.user_emotion'])
+            ->get();
+
+        $userStories = User::where('id', $user->id)
+            ->whereHas('stories', function($query) {
+                $query->where('created_at', '>=', now()->subHours(24));
+            })
+            ->with(['stories' => function($query) {
+                $query->where('created_at', '>=', now()->subHours(24))
+                    ->orderBy('created_at', 'asc');
+            }, 'stories.user_emotion'])
+            ->get();
+        $friendStories = $userStories->concat($friendStories);
+        
+        return $this->sendResponse($friendStories);
     }
 
     /**
@@ -42,14 +68,26 @@ class StoryController extends Controller
                 return response()->json(['message' => 'File không hợp lệ'], 400);
             }
         }
-
-        Story::create([
+        $story = Story::create([
             'user_id' => $request->user()->id,
-            'file' => json_encode($data),
+            'file' => $data,
             'status' => $validatedData['status'],
         ]);
 
-        return response()->json(['message' => 'Tin đã được tạo thành công'], 201);
+        $userStories = User::where('id', Auth::id())
+            ->whereHas('stories', function($query) {
+                $query->where('created_at', '>=', now()->subHours(24));
+            })
+            ->with(['stories' => function($query) {
+                $query->where('created_at', '>=', now()->subHours(24))
+                    ->orderBy('created_at', 'asc');
+            }, 'stories.user_emotion'])
+            ->first();
+
+        return response()->json([
+            'data' => $userStories,
+            'message' => 'Tin đã được tạo thành công'
+        ], 201);
     }
 
     /**
@@ -112,9 +150,9 @@ class StoryController extends Controller
     {
         $story = Story::findOrFail($id);
 
-        $request->validate([
-            'emoji' => 'string',
-        ]);
+        // $request->validate([
+        //     'emoji' => 'string',
+        // ]);
 
         if ($request->user()->id !== $story->user_id) {
             // Kiểm tra xem người dùng đã tương tác với câu chuyện này chưa

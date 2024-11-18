@@ -18,6 +18,11 @@ class Comment extends Model
     protected $casts = [
         'content' => 'array',
     ];
+
+    public function parent()
+    {
+        return $this->belongsTo(Comment::class, 'parent_id');
+    }
     
     public function post()
     {
@@ -27,7 +32,13 @@ class Comment extends Model
     {
         return $this->belongsTo(User::class);
     }
-
+    public function emotions(){
+        return $this->morphMany(Emotion::class, 'emotionable');
+    }
+    public function user_emotion() {
+        return $this->morphOne(Emotion::class, 'emotionable')
+            ->where('user_id', auth()->id());
+    }
     public function children()
     {
         return $this->hasMany(Comment::class, 'parent_id');
