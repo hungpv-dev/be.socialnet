@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Comment extends Model
 {
@@ -14,6 +14,16 @@ class Comment extends Model
         'content',
         'parent_id'
     ];
+
+    protected $casts = [
+        'content' => 'array',
+    ];
+
+    public function parent()
+    {
+        return $this->belongsTo(Comment::class, 'parent_id');
+    }
+    
     public function post()
     {
         return $this->belongsTo(Post::class);
@@ -22,7 +32,13 @@ class Comment extends Model
     {
         return $this->belongsTo(User::class);
     }
-
+    public function emotions(){
+        return $this->morphMany(Emotion::class, 'emotionable');
+    }
+    public function user_emotion() {
+        return $this->morphOne(Emotion::class, 'emotionable')
+            ->where('user_id', auth()->id());
+    }
     public function children()
     {
         return $this->hasMany(Comment::class, 'parent_id');

@@ -87,8 +87,13 @@ class PostController extends Controller
                 continue;
             }
         }
-
-
+        
+        $post->load(
+            'post_share',
+            'post_share.user:id,name,avatar',
+            'user:id,name,avatar',
+            'user_emotion'
+        );
         return $this->sendResponse([
             'data' => $post,
             'message' => 'Thêm mới bài viết thành công!'
