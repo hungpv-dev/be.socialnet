@@ -53,17 +53,18 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
-    Route::get('/notifications', function (Request $request) {
-        $index = $request->input('index', 0);
-        return $request->user()
-            ->notifications()
-            ->orderBy('updated_at', 'desc')
-            ->skip($index)
-            ->take(10)
-            ->get();
-    });
+    // Route::get('/notifications', function (Request $request) {
+    //     $index = $request->input('index', 0);
+    //     return $request->user()
+    //         ->notifications()
+    //         ->orderBy('updated_at', 'desc')
+    //         ->skip($index)
+    //         ->take(10)
+    //         ->get();
+    // });
     Route::prefix('notifications')->group(function () {
-        Route::get('list', [NotificationController::class, 'list']);
+        Route::get('', [NotificationController::class, 'list']);
+        Route::post('seen', [NotificationController::class, 'seen']);
         Route::post('read', [NotificationController::class, 'read']);
         Route::post('read/all', [NotificationController::class, 'readAll']);
     });

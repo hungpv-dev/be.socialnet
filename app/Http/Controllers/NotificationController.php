@@ -9,11 +9,21 @@ class NotificationController extends Controller
 {
     public function list(Request $request)
     {
-        $data = $request->user()->notifications()->orderBy('updated_at', 'desc')->paginate(10);
+        $index = $request->input('index', 0);
+        return $request->user()
+            ->notifications()
+            ->orderBy('updated_at', 'desc')
+            ->skip($index)
+            ->take(10)
+            ->get();
+    }
+    public function seen(Request $request)
+    {
+        Notification::where('notifiable_id', $request->user()->id)
+            ->where('is_seen', 0)
+            ->update(['is_seen' => 1]);
 
-        $request->user()->notifications()->update(['is_seen' => 1]);
-
-        return response()->json($data);
+        return response()->json(['message' => 'Thao tác thành công!']);
     }
     public function read(Request $request)
     {

@@ -13,6 +13,6 @@ class FriendRequestSeeder extends Seeder
      */
     public function run(): void
     {
-        FriendRequests::factory()->count(10)->create();
+        FriendRequests::factory()->count(100)->create();
     }
 }
