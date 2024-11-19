@@ -6,22 +6,22 @@ use App\Http\Controllers\Auth\{
     ResetPasswordController
 };
 
-use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\PostController;
+use App\Http\Controllers\Admin;
 
 use App\Http\Controllers\{
     BlockController,
     ChatRoomController,
     CommentControler,
     EmotionController,
+    CommentController,
+    PostController,
     UserController,
     FriendController,
     FriendRequestController,
     MessageController,
-    StoryController
+    StoryController,
+    NotificationController,
 };
-use App\Models\User;
-use Illuminate\Auth\GenericUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Broadcast;
@@ -49,19 +49,10 @@ Route::middleware(['auth:api'])->group(function () {
         return Broadcast::auth($request);
     });
 
-
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
-    // Route::get('/notifications', function (Request $request) {
-    //     $index = $request->input('index', 0);
-    //     return $request->user()
-    //         ->notifications()
-    //         ->orderBy('updated_at', 'desc')
-    //         ->skip($index)
-    //         ->take(10)
-    //         ->get();
-    // });
+
     Route::prefix('notifications')->group(function () {
         Route::get('', [NotificationController::class, 'list']);
         Route::post('seen', [NotificationController::class, 'seen']);
@@ -69,6 +60,7 @@ Route::middleware(['auth:api'])->group(function () {
         Route::post('read/all', [NotificationController::class, 'readAll']);
     });
 
+    Route::get('/posts/by/user/{id}', [PostController::class, 'getPostByUser']);
     Route::apiResource('/posts', PostController::class);
 
     Route::apiResource('/emotions', EmotionController::class);
@@ -85,7 +77,7 @@ Route::middleware(['auth:api'])->group(function () {
         Route::get('/search', [ChatRoomController::class, 'search']);
         Route::get('/images/{id}', [ChatRoomController::class, 'images']);
         Route::post('/', [ChatRoomController::class, 'store']);
-        Route::get('/{id}', action: [ChatRoomController::class, 'show']);
+        Route::get('/{id}', [ChatRoomController::class, 'show']);
         Route::put('/{id}', [ChatRoomController::class, 'update']);
         Route::post('/notification/{id}', [ChatRoomController::class, 'notification']);
         Route::put('/send/{id}', [ChatRoomController::class, 'send']);
@@ -143,4 +135,8 @@ Route::middleware(['auth:api'])->group(function () {
     Route::resource('story', StoryController::class);
     Route::resource('blocks', BlockController::class);
     Route::resource('comments', CommentControler::class);
+});
+
+Route::prefix('admin')->group(function(){
+    Route::resource('reports/type', Admin\ReportTypeController::class);
 });

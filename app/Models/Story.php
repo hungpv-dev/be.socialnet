@@ -17,7 +17,20 @@ class Story extends Model
         'created_at'
     ];
 
+    protected $casts = [
+        'file' => 'array'
+    ];
+
     public function user(){
         return $this->belongsTo(User::class);
+    }
+    public function user_emotion() {
+        return $this->hasOne(UserStories::class, 'story_id')
+            ->where('user_id', auth()->id());
+    }
+    //Báo cáo tin
+    public function reports()
+    {
+        return $this->morphMany(Report::class, 'reportable');
     }
 }

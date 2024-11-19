@@ -21,6 +21,8 @@ COPY --from=composer:2.5.4 /usr/bin/composer /usr/bin/composer
 RUN groupadd -g 1000 www
 RUN useradd -u $uid -ms /bin/bash -g www-data $user
 
+COPY .docker/php/local.ini /usr/local/etc/php/conf.d/local.ini
+
 COPY . /var/www
 
 COPY --chown=$user:www-data . /var/www

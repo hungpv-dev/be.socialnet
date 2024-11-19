@@ -16,9 +16,17 @@ class Controller extends BaseController
      * @param  number  $code  Status code muốn trả về
      * @return \Illuminate\Http\JsonResponse
      */
-    
-     public function sendResponse($response, $code = 200){
+
+    public function sendResponse($response, $code = 200)
+    {
         return response()->json($response, $code);
     }
-
+    // Hàm xóa file khi có file mới được tải lên
+    public function deleteFile($url)
+    {
+        $filePath = public_path(str_replace(url('storage/'), 'storage/', $url));
+        if (file_exists($filePath)) {
+            unlink($filePath);
+        }
+    }
 }

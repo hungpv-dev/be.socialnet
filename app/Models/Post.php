@@ -28,7 +28,9 @@ class Post extends Model
     public function user(){
         return $this->belongsTo(User::class);
     }
-    
+    public function comments(){
+        return $this->hasMany(Comment::class);
+    }
     public function emotions(){
         return $this->morphMany(Emotion::class, 'emotionable');
     }
@@ -39,5 +41,10 @@ class Post extends Model
 
     public function post_share(){
         return $this->belongsTo(Post::class,'share_id');
+    }
+    //Báo cáo bài  viết
+    public function reports()
+    {
+        return $this->morphMany(Report::class, 'reportable');
     }
 }
