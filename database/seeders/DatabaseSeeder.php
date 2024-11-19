@@ -21,7 +21,8 @@ class DatabaseSeeder extends Seeder
         $this->call(FriendRequestSeeder::class);
         $this->call(FriendSeeder::class);
         $this->call(BlockSeeder::class);
-        $this->call(UserStoriesSeeder::class);
+        // $this->call(UserStoriesSeeder::class);
         $this->call(PostSeeder::class);
+        $this->call(NotificationSeeder::class);
     }
 }

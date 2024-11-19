@@ -2,17 +2,14 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+use App\Models\Notification;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
-class UserSeeder extends Seeder
+class NotificationSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        User::factory()->count(500)->create();
+        Notification::factory()->count(100)->create();
     }
 }

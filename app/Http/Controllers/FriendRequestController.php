@@ -59,7 +59,7 @@ class FriendRequestController extends Controller
             $receiverUser->follower++;
             $receiverUser->save();
 
-            return $this->sendResponse('Gửi lời mời kết bạn thành công!');
+            return $this->sendResponse(['message' => 'Gửi lời mời kết bạn thành công!']);
         }
     }
     //Chấp nhận lời mời kết bạn
@@ -70,12 +70,12 @@ class FriendRequestController extends Controller
             $user = $request->user();
 
             if ($user->id == $to_user) {
-                return $this->sendResponse('Không thể chấp nhận kết bạn với chính mình', 400);
+                return $this->sendResponse(['message' => 'Không thể chấp nhận kết bạn với chính mình'], 400);
             }
             // Kiểm tra người dùng có tồn tại
             $sender = User::find($to_user);
             if (!$sender) {
-                return $this->sendResponse('Người dùng không tồn tại', 404);
+                return $this->sendResponse(['message' => 'Người dùng không tồn tại'], 404);
             }
 
             // Kiểm tra mối quan hệ bạn bè
@@ -85,7 +85,7 @@ class FriendRequestController extends Controller
             })->first();
 
             if ($existingFriend) {
-                return $this->sendResponse('Đã là bạn bè', 400);
+                return $this->sendResponse(['message' => 'Đã là bạn bè'], 400);
             }
 
             // Kiểm tra yêu cầu kết bạn đã tồn tại
@@ -96,7 +96,7 @@ class FriendRequestController extends Controller
             })->first();
 
             if (!$existingRequest) {
-                return $this->sendResponse('Không tìm thấy lời mời kết bạn', 400);
+                return $this->sendResponse(['message' => 'Không tìm thấy lời mời kết bạn'], 400);
             }
             $existingRequest->delete();
             Friend::create([
@@ -110,7 +110,7 @@ class FriendRequestController extends Controller
             $request->user()->friend_counts++;
             $request->user()->save();
 
-            return $this->sendResponse('Chấp nhận lời mời kết bạn thành công!');
+            return $this->sendResponse(['message' => 'Chấp nhận lời mời kết bạn thành công!']);
         }
     }
     //Từ chối lời mời kết bạn
@@ -123,11 +123,11 @@ class FriendRequestController extends Controller
             // Kiểm tra người dùng có tồn tại
             $sender = User::find($to_user);
             if (!$sender) {
-                return $this->sendResponse('Người dùng không tồn tại', 404);
+                return $this->sendResponse(['message' => 'Người dùng không tồn tại'], 404);
             }
 
             if ($user->id == $to_user) {
-                return $this->sendResponse('Không thể từ chối lời mời kết bạn với chính mình', 400);
+                return $this->sendResponse(['message' => 'Không thể từ chối lời mời kết bạn với chính mình'], 400);
             }
 
             $existingRequest = FriendRequests::where(function ($query) use ($user, $to_user) {
@@ -135,13 +135,13 @@ class FriendRequestController extends Controller
             })->first();
 
             if (!$existingRequest) {
-                return $this->sendResponse('Không tìm thấy lời mời kết bạn', 400);
+                return $this->sendResponse(['message' => 'Không tìm thấy lời mời kết bạn'], 400);
             }
 
             $existingRequest->delete();
             $request->user()->follower--;
             $request->user()->save();
-            return $this->sendResponse('Từ chối lời mời kết bạn thành công!');
+            return $this->sendResponse(['message' => 'Từ chối lời mời kết bạn thành công!']);
         }
     }
     // Xóa lời mời kết bạn đã gửi
@@ -154,11 +154,11 @@ class FriendRequestController extends Controller
             // Kiểm tra người dùng có tồn tại
             $receiver = User::find($to_user);
             if (!$receiver) {
-                return $this->sendResponse('Người dùng không tồn tại', 404);
+                return $this->sendResponse(['message' => 'Người dùng không tồn tại'], 404);
             }
 
             if ($user->id == $to_user) {
-                return $this->sendResponse('Không thể xóa lời mời kết bạn với chính mình', 400);
+                return $this->sendResponse(['message' => 'Không thể xóa lời mời kết bạn với chính mình'], 400);
             }
 
             $existingRequest = FriendRequests::where('sender', $user->id)
@@ -166,13 +166,13 @@ class FriendRequestController extends Controller
                 ->first();
 
             if (!$existingRequest) {
-                return $this->sendResponse('Không tìm thấy lời mời kết bạn đã gửi', 400);
+                return $this->sendResponse(['message' => 'Không tìm thấy lời mời kết bạn đã gửi'], 400);
             }
 
             $existingRequest->delete();
             $receiver->follower--;
             $receiver->save();
-            return $this->sendResponse('Xóa lời mời kết bạn thành công!');
+            return $this->sendResponse(['message' => 'Xóa lời mời kết bạn thành công!']);
         }
     }
 
@@ -198,7 +198,7 @@ class FriendRequestController extends Controller
             ]);
         }
 
-        return $this->sendResponse('Phương thức không được hỗ trợ', 405);
+        return $this->sendResponse(['message' => 'Phương thức không được hỗ trợ'], 405);
     }
 
     // Lấy danh sách lời mời kết bạn đã gửi
@@ -227,6 +227,6 @@ class FriendRequestController extends Controller
             ]);
         }
 
-        return $this->sendResponse('Phương thức không được hỗ trợ', 405);
+        return $this->sendResponse(['message' => 'Phương thức không được hỗ trợ'], 405);
     }
 }

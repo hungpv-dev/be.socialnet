@@ -16,6 +16,8 @@ return new class extends Migration
             $table->string('type');
             $table->morphs('notifiable');
             $table->text('data');
+            $table->boolean('is_seen')->default(0)->comment('0: chưa đọc; 1: đã xem');
+            $table->boolean('is_read')->default(0)->comment('0: chưa đọc; 1: đã đọc');
             $table->timestamp('read_at')->nullable();
             $table->timestamps();
         });
