@@ -18,11 +18,8 @@ class EmotionNotification extends Notification
             'avatar' => auth()->user()->avatar,
             'message' => '<b>' . auth()->user()->name . '</b> ' . $this->message
         ];
-        if($type == 1){
-            $this->data['post_id'] = $this->id;
-        }else{
-            $this->data['comment_id'] = $this->id;
-        }
+        $this->data['post_id'] = $this->id;
+        $this->data['comment_id'] = $this->id;
     }
     public function via(object $notifiable): array
     {

@@ -120,7 +120,7 @@ class UserController extends Controller
         $post = new Post();
         $post->user_id = $user_id;
         $post->share_id = NULL;
-        $post->content = $request->input('content', '');
+        $post->content = $request->input('content') ?? '';
         $post->status = $request->input('status', 'public');
         $post->type = 'avatar';
         if (!$request->hasFile('avatar')) {
@@ -130,13 +130,13 @@ class UserController extends Controller
         }
         $path = $request->file('avatar')->store('posts/image', 'public');
         $fullPath = url('storage/' . $path);
-        $post->data = ['image' => $fullPath];
+        $post->data = ['image' => [$fullPath]];
         $post->save();
         $request->user()->avatar = $fullPath;
         $request->user()->save();
 
         return $this->sendResponse([
-            'message' => 'Cập nhật ảnh đ���i diện thành công!'
+            'message' => 'Cập nhật ảnh đại diện thành công!'
         ], 200);
     }
     public function listAvatar()
@@ -167,7 +167,7 @@ class UserController extends Controller
         $post = new Post();
         $post->user_id = $user_id;
         $post->share_id = NULL;
-        $post->content = $request->input('content', '');
+        $post->content = $request->input('content') ?? '';
         $post->status = $request->input('status', 'public');
         $post->type = 'background';
         if (!$request->hasFile('background')) {
@@ -177,7 +177,7 @@ class UserController extends Controller
         }
         $path = $request->file('background')->store('posts/image', 'public');
         $fullPath = url('storage/' . $path);
-        $post->data = ['image' => $fullPath];
+        $post->data = ['image' => [$fullPath]];
         $post->save();
         $request->user()->cover_avatar = $fullPath;
         $request->user()->save();

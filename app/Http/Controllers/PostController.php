@@ -40,8 +40,9 @@ class PostController extends Controller
         $post->whereNotIn('id', $ids);
         $post->whereIn('user_id', $friendIds);
 
-        $post->where('type', 'post')
+        $post
             ->whereIn('status', ['public', 'friend'])
+            // ->where('type', 'post')
             ->where('is_active', '1');
         $post->orderBy('created_at', 'desc');
 
@@ -118,7 +119,7 @@ class PostController extends Controller
                 'user_emotion'
             )
                 ->where('id', $id)
-                ->where('type', 'post')
+                // ->where('type', 'post')
                 ->firstOrFail();
 
             if (auth()->user()->id == $post->user_id) {

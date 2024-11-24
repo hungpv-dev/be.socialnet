@@ -21,6 +21,7 @@ class EmotionController extends Controller
                 $model = Post::findOrFail($id);
             }else{
                 $model = Comment::findOrFail($id);
+                $id = $model->post_id;
             }
             $userEmotions = $model->emotions()->where("user_id",$user_id)->first();
             if($userEmotions) {
@@ -36,10 +37,16 @@ class EmotionController extends Controller
                 }
             }else{
                 $typeN = 2;
-                $message = 'Đã bày bỏ cảm xúc về bình luận của bạn!';
+                $message = 'đã bày bỏ cảm xúc về bình luận của bạn!';
                 if($type === 'post'){
                     $typeN = 1;
-                    $message = 'Đã bày bỏ cảm xúc về bài viết của bạn!';
+                    if($model->type == 'avatar') {
+                        $message = 'đã bày tỏ cảm xúc về ảnh đại diện của bạn!';
+                    } else if($model->type == 'background') {
+                        $message = 'đã bày tỏ cảm xúc về ảnh bìa của bạn!';
+                    } else {
+                        $message = 'đã bày tỏ cảm xúc về bài viết của bạn!';
+                    }
                     $model->emoji_count++;
                 }
                 $model->emotions()->create([
