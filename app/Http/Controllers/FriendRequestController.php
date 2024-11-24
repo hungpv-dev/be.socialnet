@@ -13,6 +13,11 @@ use Illuminate\Http\Request;
 
 class FriendRequestController extends Controller
 {
+    public $friendController;
+    public function __construct(FriendController $friendController)
+    {
+        $this->friendController = $friendController;
+    }
     //Gửi lời mời kết bạn
     public function add(Request $request)
     {
@@ -84,16 +89,17 @@ class FriendRequestController extends Controller
                     ->where('user2', max($user->id, $to_user));
             })->first();
 
-            if ($existingFriend) {
-                return $this->sendResponse(['message' => 'Đã là bạn bè'], 400);
-            }
-
             // Kiểm tra yêu cầu kết bạn đã tồn tại
             $existingRequest = FriendRequests::where(function ($query) use ($user, $to_user) {
                 $query->where('sender', $user->id)->where('receiver', $to_user);
             })->orWhere(function ($query) use ($user, $to_user) {
                 $query->where('sender', $to_user)->where('receiver', $user->id);
             })->first();
+
+            if ($existingFriend) {
+                $existingRequest->delete();
+                return $this->sendResponse(['message' => 'Đã là bạn bè'], code: 400);
+            }
 
             if (!$existingRequest) {
                 return $this->sendResponse(['message' => 'Không tìm thấy lời mời kết bạn'], 400);
@@ -135,7 +141,7 @@ class FriendRequestController extends Controller
             })->first();
 
             if (!$existingRequest) {
-                return $this->sendResponse(['message' => 'Không tìm thấy lời mời kết bạn'], 400);
+                return $this->sendResponse(['message' => 'Không tìm thấy lời mời kết bạn'], 404);
             }
 
             $existingRequest->delete();
@@ -179,54 +185,51 @@ class FriendRequestController extends Controller
     // Lấy danh sách lời mời kết bạn đã nhận
     public function getReceivedRequests(Request $request)
     {
-        if ($request->method() == "GET") {
-            $user = $request->user();
-            $sort = $request->input('sort', 'desc');
-            $perPage = $request->input('per_page', 10); // Số lượng item trên mỗi trang
+        $user = $request->user();
+        $index = $request->index; // Chỉ mục bắt đầu
 
-            $requests = FriendRequests::where('receiver', $user->id)
-                ->with('sender:id,name,avatar')
-                ->orderBy('created_at', $sort)
-                ->paginate($perPage);
+        // Lấy yêu cầu kết bạn theo chỉ mục và sắp xếp theo id giảm dần
+        $requests = FriendRequests::where('receiver', $user->id)
+            ->with('sender:id,name,avatar,address,hometown,relationship,follower')
+            ->orderBy('id', 'desc') // Sắp xếp theo id giảm dần
+            ->skip($index) // Bỏ qua số lượng yêu cầu đã có từ chỉ mục bắt đầu
+            ->take(10) // Lấy 10 kết quả từ chỉ mục đó
+            ->get(); // Lấy dữ liệu
 
-            return $this->sendResponse([
-                'requests' => $requests->items(),
-                'total' => $requests->total(),
-                'current_page' => $requests->currentPage(),
-                'per_page' => $requests->perPage(),
-                'last_page' => $requests->lastPage(),
-            ]);
-        }
+        // Biến đổi dữ liệu để thêm thông tin về bạn chung
+        $requests->transform(function ($sender) use ($user) {
+            if ($sender->sender) {
+                $sender->mutualFriends = count($this->friendController->findCommonFriends($user->id, $sender->sender));
+            } else {
+                $sender->mutualFriends = 0;
+            }
+            return $sender;
+        });
 
-        return $this->sendResponse(['message' => 'Phương thức không được hỗ trợ'], 405);
+        return $this->sendResponse($requests);
     }
 
     // Lấy danh sách lời mời kết bạn đã gửi
     public function getSentRequests(Request $request)
     {
-        if ($request->method() == "GET") {
-            $user = $request->user();
-            $sort = $request->input('sort', 'desc');
-            $perPage = $request->input('per_page', 10); // Số lượng item trên mỗi trang
+        $user = $request->user();
+        $index = $request->index;
 
-            if (!in_array($sort, ['asc', 'desc'])) {
-                $sort = 'desc';
+        $requests = FriendRequests::where('sender', $user->id)
+            ->with('receiver:id,name,avatar,address,hometown,relationship,follower')
+            ->skip($index)
+            ->take(10)
+            ->get();
+
+        $requests->transform(function ($recei) use ($user) {
+            if ($recei->receiver) {
+                $recei->mutualFriends = count($this->friendController->findCommonFriends($user->id, $recei->receiver));
+            } else {
+                $recei->mutualFriends = 0;
             }
+            return $recei;
+        });
 
-            $requests = FriendRequests::where('sender', $user->id)
-                ->with('receiver:id,name,avatar')
-                ->orderBy('created_at', $sort)
-                ->paginate($perPage);
-
-            return $this->sendResponse([
-                'requests' => $requests->items(),
-                'total' => $requests->total(),
-                'current_page' => $requests->currentPage(),
-                'per_page' => $requests->perPage(),
-                'last_page' => $requests->lastPage(),
-            ]);
-        }
-
-        return $this->sendResponse(['message' => 'Phương thức không được hỗ trợ'], 405);
+        return $this->sendResponse($requests);
     }
 }
