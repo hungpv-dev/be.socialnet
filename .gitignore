@@ -20,3 +20,4 @@ yarn-error.log
 .docker/data/db/*
 .docker/data/redis/*
 .env
+.env
