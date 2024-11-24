@@ -14,15 +14,15 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(UserSeeder::class);
+        // $this->call(UserSeeder::class);
         // $this->call(ChatRoomSeeder::class);
         // ChatType::insert([['id' => 1,'name' => 'Chat riêng tư'],['id' => 2,'name' => 'Chat nhóm']]);
         // $this->call(MessageSeeder::class);
         $this->call(FriendRequestSeeder::class);
-        $this->call(FriendSeeder::class);
-        $this->call(BlockSeeder::class);
+        // $this->call(FriendSeeder::class);
+        // $this->call(BlockSeeder::class);
         // $this->call(UserStoriesSeeder::class);
-        $this->call(PostSeeder::class);
-        $this->call(NotificationSeeder::class);
+        // $this->call(PostSeeder::class);
+        // $this->call(NotificationSeeder::class);
     }
 }
