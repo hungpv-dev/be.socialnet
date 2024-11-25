@@ -10,6 +10,9 @@ use App\Http\Resources\ChatRoomResource;
 use App\Http\Resources\MessageResource;
 use App\Models\ChatRoom;
 use App\Models\Message;
+use App\Models\User;
+use App\Notifications\Message\SendMessage as MessageSendMessage;
+use App\Notifications\Message\SendMessageBroadcast;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -94,8 +97,20 @@ class MessageRepository
                 $message = Message::create($data);
                 $listMessage[] = new MessageResource($message);
             }
+            $userIds = collect($room->user)->map(function($user) {
+                return (int) str_replace('user_', '', $user);
+            })->reject(function($id) {
+                return $id === auth()->id();
+            });
+            
+            // $request->user()->notify(new MessageSendMessage($content, $room)); // Thông báo slack
             broadcast(new PushMessage($chat_room_id, $listMessage));
             broadcast(new RefreshUsers($room));
+            $users = User::whereIn('id', $userIds)->get();
+            foreach ($users as $u) {
+                $u->notify(new SendMessageBroadcast(end($listMessage), $room));
+            }
+            
             return response($listMessage, 200);
         } catch (\Exception $e) {
             return response([

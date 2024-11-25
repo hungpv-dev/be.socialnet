@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Notifications\Slack\SlackRoute;
 use Laravel\Passport\HasApiTokens;
 
 class User extends Authenticatable
@@ -38,6 +39,10 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    public function routeNotificationForSlack($notification): mixed
+    {
+        return '#social';
+    }
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];

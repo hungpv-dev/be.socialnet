@@ -16,6 +16,8 @@ yarn-error.log
 .fleet
 .idea
 .vscode
-
+.env
 .docker/data/db/*
 .docker/data/redis/*
+.env
+.env

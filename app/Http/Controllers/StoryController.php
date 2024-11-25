@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Story;
 use App\Models\UserStories;
+use App\Notifications\Story\CreateNotification;
 use Illuminate\Http\Request;
 use App\Notifications\Story\EmotionNotification;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class StoryController extends Controller
 {
@@ -73,6 +75,18 @@ class StoryController extends Controller
             'file' => $data,
             'status' => $validatedData['status'],
         ]);
+
+        $friendIds = (new PostController())->getFriendIds(Auth::user());
+        $users = User::whereIn('id', $friendIds)->get();
+        foreach ($users as $friend) {
+            try {
+                $notification = new CreateNotification($story->id, 'đã đăng một tin mới');
+                $friend->notify($notification);
+            } catch (\Exception $e) {
+                Log::error('Lỗi gửi thông báo: ' . $e->getMessage());
+                continue;
+            }
+        }
 
         $userStories = User::where('id', Auth::id())
             ->whereHas('stories', function($query) {

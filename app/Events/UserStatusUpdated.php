@@ -14,13 +14,11 @@ class UserStatusUpdated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $userId;
-    public $status;
+    public $user;
 
-    public function __construct($userId, $status)
+    public function __construct($user)
     {
-        $this->userId = $userId;
-        $this->status = $status;
+        $this->user = $user;
     }
 
     public function broadcastOn()
@@ -31,8 +29,7 @@ class UserStatusUpdated implements ShouldBroadcast
     public function broadcastWith()
     {
         return [
-            'user_id' => $this->userId,
-            'status' => $this->status,
+            'user' => $this->user,
         ];
     }
 }

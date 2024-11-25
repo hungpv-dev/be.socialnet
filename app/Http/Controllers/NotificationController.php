@@ -26,6 +26,18 @@ class NotificationController extends Controller
 
         return response()->json(['message' => 'Thao tác thành công!']);
     }
+    public function unseenCount(Request $request)
+    {
+        $count = $request->user()
+        ->notifications()
+        ->where('is_seen',0)
+        ->count();
+
+        return response()->json([
+            'count' => $count,
+            'message' => 'Thao tác thành công!'
+        ]);
+    }
     public function read(Request $request)
     {
         $noti = Notification::find($request->id);

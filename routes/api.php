@@ -52,9 +52,13 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+    Route::get('/friend-ids', function (Request $request) {
+        return (new PostController())->getFriendIds($request->user());
+    });
 
     Route::prefix('notifications')->group(function () {
         Route::get('', [NotificationController::class, 'list']);
+        Route::get('unseen-count', [NotificationController::class, 'unseenCount']);
         Route::post('seen', [NotificationController::class, 'seen']);
         Route::post('read', [NotificationController::class, 'read']);
         Route::post('read/all', [NotificationController::class, 'readAll']);

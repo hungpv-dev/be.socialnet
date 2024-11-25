@@ -9,7 +9,7 @@ use App\Models\Message;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-
+use GuzzleHttp\Client as HttpClient;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -31,9 +31,4 @@ Route::get('/user', function () {
 });
 
 Route::get('/test', function () {
-    event(new UserStatusUpdated(1,1));
-    return response()->json(now());
-    // $newRoom = ChatRoom::find(15);
-    // $roomResource = new ChatRoomResource($newRoom);
-    // return $roomResource;
 });

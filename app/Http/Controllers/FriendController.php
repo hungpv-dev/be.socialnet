@@ -15,9 +15,9 @@ use Illuminate\Support\Facades\Log;
 class FriendController extends Controller
 {
     protected $blockController;
-    public function __construct(BlockController $blockController)
+    public function __construct()
     {
-        $this->blockController = $blockController;
+        $this->blockController = new BlockController;
     }
     public function checkFriendStatus($user)
     {
@@ -44,7 +44,7 @@ class FriendController extends Controller
 
         return ['add', 'chat'];
     }
-
+    
     //Tìm kiếm bạn bè
     public function findFriend(Request $request)
     {
@@ -64,7 +64,7 @@ class FriendController extends Controller
         $query = User::whereIn('id', $friendIds)
             ->where('is_active', 0)
             ->whereNull('deleted_at')
-            ->select('id', 'name', 'avatar', 'address', 'hometown', 'gender', 'relationship', 'follower', 'friend_counts', 'is_online')
+            ->select('id', 'name','avatar', 'address', 'hometown', 'gender', 'relationship', 'follower', 'friend_counts', 'is_online')
             ->where('name', 'LIKE', "%" . $request->name . "%")
             ->whereNotIn('id', function ($subQuery) use ($user) {
                 $subQuery->select('user_block')->from('blocks')->where('user_is_blocked', $user->id);
@@ -99,46 +99,50 @@ class FriendController extends Controller
     // Xóa mối quan hệ bạn bè
     public function removeFriend(Request $request)
     {
-        $friend_id = $request->id_account;
-        $user = $request->user();
+        if ($request->method() == "DELETE") {
+            $friend_id = $request->id_account;
+            $user = $request->user();
 
-        // Kiểm tra người dùng có tồn tại
-        $friendUser = User::find($friend_id);
-        if (!$friendUser) {
-            return $this->sendResponse('Người dùng không tồn tại', 404);
+            // Kiểm tra người dùng có tồn tại
+            $friendUser = User::find($friend_id);
+            if (!$friendUser) {
+                return $this->sendResponse('Người dùng không tồn tại', 404);
+            }
+
+            if ($user->id == $friend_id) {
+                return $this->sendResponse('Không thể xóa mối quan hệ bạn bè với chính mình', 400);
+            }
+
+            // Tìm mối quan hệ bạn bè
+            $friendship = Friend::where(function ($query) use ($user, $friend_id) {
+                $query->where('user1', $user->id)->where('user2', $friend_id);
+            })->orWhere(function ($query) use ($user, $friend_id) {
+                $query->where('user1', $friend_id)->where('user2', $user->id);
+            })->first();
+
+            if (!$friendship) {
+                return $this->sendResponse('Không tìm thấy mối quan hệ bạn bè', 400);
+            }
+
+            $friendship->delete();
+            $friendUser->follower--;
+            $friendUser->friend_counts--;
+            $friendUser->save();
+            $request->user()->follower--;
+            $request->user()->friend_counts--;
+            $request->user()->save();
+            return $this->sendResponse('Xóa mối quan hệ bạn bè thành công!');
         }
 
-        if ($user->id == $friend_id) {
-            return $this->sendResponse('Không thể xóa mối quan hệ bạn bè với chính mình', 400);
-        }
-
-        // Tìm mối quan hệ bạn bè
-        $friendship = Friend::where(function ($query) use ($user, $friend_id) {
-            $query->where('user1', $user->id)->where('user2', $friend_id);
-        })->orWhere(function ($query) use ($user, $friend_id) {
-            $query->where('user1', $friend_id)->where('user2', $user->id);
-        })->first();
-
-        if (!$friendship) {
-            return $this->sendResponse('Không tìm thấy mối quan hệ bạn bè', 404);
-        }
-
-        $friendship->delete();
-        $friendUser->follower--;
-        $friendUser->friend_counts--;
-        $friendUser->save();
-        $request->user()->follower--;
-        $request->user()->friend_counts--;
-        $request->user()->save();
-        return $this->sendResponse('Xóa mối quan hệ bạn bè thành công!');
+        return $this->sendResponse('Phương thức không được hỗ trợ', 405);
     }
     // Lấy danh sách bạn bè
     public function getFriendList(Request $request)
     {
         $userId = $request->id;
-        $index = $request->index;
-
         if (!$userId) return $this->sendResponse(['message' => 'Đã có lỗi xảy ra!'], 404);
+        $sort = $request->input('sort', 'desc');
+        $perPage = $request->input('per_page', 10);
 
         $listFriend = Friend::where('user1', $userId)
             ->pluck('user2')
@@ -154,11 +158,10 @@ class FriendController extends Controller
             ->whereIn('id', $listFriend)
             ->whereNotIn('id', $listBlock)
             ->select(['id', 'name', 'address', 'hometown', 'relationship', 'follower', 'friend_counts'])
-            ->skip($index)
-            ->take(10)
-            ->get();
+            ->orderBy('id', $sort)
+            ->paginate($perPage);
 
-        foreach ($data as $item) {
+        foreach ($data->items() as $item) {
             $item->friend_common = $this->findCommonFriends(auth()->user()->id, $item->id);
             $item->button = $this->checkFriendStatus($item->id);
         }
@@ -268,10 +271,10 @@ class FriendController extends Controller
             ->get();
 
         // Thêm số bạn chung vào mỗi mục trong danh sách và xáo trộn
-        // $allSuggestedFriends = $allSuggestedFriends->map(function ($item) use ($request) {
-        //     $item->friend_commons = $this->findCommonFriends($request->user()->id, $item->id);
-        //     return $item;
-        // })->shuffle();
+        $allSuggestedFriends = $allSuggestedFriends->map(function ($item) use ($request) {
+            $item->friend_commons = $this->findCommonFriends($request->user()->id, $item->id);
+            return $item;
+        })->shuffle();
 
         // Thực hiện phân trang thủ công
         $currentPage = LengthAwarePaginator::resolveCurrentPage();

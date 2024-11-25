@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Comment;
 use App\Models\Post;
+use App\Notifications\Post\EmotionNotification;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,11 +15,13 @@ class EmotionController extends Controller
         $id = $request->input("id");
         $type = $request->input("type");
         $user_id = Auth::id();
+        
         try{
             if($type === 'post'){
                 $model = Post::findOrFail($id);
             }else{
                 $model = Comment::findOrFail($id);
+                $id = $model->post_id;
             }
             $userEmotions = $model->emotions()->where("user_id",$user_id)->first();
             if($userEmotions) {
@@ -33,7 +36,17 @@ class EmotionController extends Controller
                     $userEmotions->save();
                 }
             }else{
+                $typeN = 2;
+                $message = 'đã bày bỏ cảm xúc về bình luận của bạn!';
                 if($type === 'post'){
+                    $typeN = 1;
+                    if($model->type == 'avatar') {
+                        $message = 'đã bày tỏ cảm xúc về ảnh đại diện của bạn!';
+                    } else if($model->type == 'background') {
+                        $message = 'đã bày tỏ cảm xúc về ảnh bìa của bạn!';
+                    } else {
+                        $message = 'đã bày tỏ cảm xúc về bài viết của bạn!';
+                    }
                     $model->emoji_count++;
                 }
                 $model->emotions()->create([
@@ -41,6 +54,9 @@ class EmotionController extends Controller
                     'created_at' => now(),
                     'emoji' => $request->input('emoji')
                 ]);
+                if($model->user->id != $user_id){
+                    $model->user->notify(new EmotionNotification($id, $message, $typeN));
+                }
             }
             $model->save();
             // broadcast(new SendIcon($message->chat_room_id,message: $message));

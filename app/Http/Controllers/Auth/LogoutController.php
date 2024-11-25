@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Events\UserStatusUpdated;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Laravel\Passport\RefreshToken;
@@ -33,6 +35,15 @@ class LogoutController extends Controller
     }
 
     public function changeStatus(Request $request){
-        Log::info('User id: '.$request->user_id);
+        $user = User::findOrFail($request->user_id);
+        $user->is_online = $request->input('is_online', false);
+        if(!$user->is_online){
+            $user->time_offline = now();
+        }
+        $user->save();
+        broadcast(new UserStatusUpdated($user));
+        return $this->sendResponse([
+            'message' => 'Cập nhật trạng thái thành công!'
+        ], 200);
     }
 }

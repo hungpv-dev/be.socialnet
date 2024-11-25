@@ -1,21 +1,21 @@
 <?php
 
-namespace App\Notifications;
+namespace App\Notifications\Story;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class CreatePost extends Notification
+class CreateNotification extends Notification
 {
     use Queueable;
 
     public $data = [];
-    public function __construct(public $post, public $message)
+    public function __construct(public $story, public $message)
     {
         $this->data = [
-            'post_id' => $this->post,
+            'story_id' => $this->story,
             'avatar' => auth()->user()->avatar,
             'message' => '<b>' . auth()->user()->name . '</b> ' . $this->message
         ];
@@ -29,5 +29,4 @@ class CreatePost extends Notification
     {
         return $this->data;
     }
-
 }

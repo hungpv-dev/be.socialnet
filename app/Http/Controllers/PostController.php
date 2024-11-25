@@ -2,23 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\PostResource;
-use App\Models\Friend;
 use App\Models\Post;
 use App\Models\User;
+use App\Models\Friend;
+use Illuminate\Http\Request;
 use App\Notifications\CreatePost;
+use Illuminate\Support\Facades\Log;
+use App\Http\Resources\PostResource;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 
 class PostController extends Controller
 {
     public $friendController;
-    public function __construct(FriendController $friendController)
+    public function __construct()
     {
-        $this->friendController = $friendController;
+        $this->friendController = new FriendController;
     }
     public function index(Request $request)
     {
@@ -40,8 +40,9 @@ class PostController extends Controller
         $post->whereNotIn('id', $ids);
         $post->whereIn('user_id', $friendIds);
 
-        $post->where('type', 'post')
+        $post
             ->whereIn('status', ['public', 'friend'])
+            // ->where('type', 'post')
             ->where('is_active', '1');
         $post->orderBy('created_at', 'desc');
 
@@ -60,6 +61,8 @@ class PostController extends Controller
         $user_id = auth()->user()->id;
         $user = Auth::user();
         $post = new Post();
+        $userShare = 0;
+        $postShare = null;
         if ($request->has('share')) {
             $share = $request->input('share');
             $postShare = Post::find($share);
@@ -67,6 +70,7 @@ class PostController extends Controller
                 $postShare->share_count++;
                 $postShare->save();
                 $post->share_id = $postShare->id;
+                
             }
         }
         $post->user_id = $user_id;
@@ -75,12 +79,18 @@ class PostController extends Controller
         $listFiles = (new FileController($request->file('files')))->posts();
         $post->data = $listFiles;
         $post->save();
-
+        if($postShare && $postShare->user->id != $user_id){
+            $userShare = $postShare->user->id;
+            $postShare->user->notify(new CreatePost($post->id,'đã chia sẻ bài viết của bạn'));
+        }
         $ids = $this->getFriendIds($user);
         $users = User::whereIn('id', $ids)->get();
         foreach ($users as $friend) {
             try {
-                $notification = new CreatePost($post, $user);
+                if($userShare == $friend->id){
+                    continue;
+                }
+                $notification = new CreatePost($post->id, 'đã thêm bài viết mới!');
                 $friend->notify($notification);
             } catch (\Exception $e) {
                 Log::error('Notification error: ' . $e->getMessage());
@@ -109,7 +119,7 @@ class PostController extends Controller
                 'user_emotion'
             )
                 ->where('id', $id)
-                ->where('type', 'post')
+                // ->where('type', 'post')
                 ->firstOrFail();
 
             if (auth()->user()->id == $post->user_id) {
