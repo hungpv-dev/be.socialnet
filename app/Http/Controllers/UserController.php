@@ -23,7 +23,7 @@ class UserController extends Controller
         if (!$request->id)
             return $this->sendResponse(['message' => 'Đã có lỗi xảy ra!'], 404);
 
-        $user = User::select(['id', 'name', 'avatar', 'cover_avatar', 'follower', 'friend_counts', 'address', 'hometown', 'gender', 'birthday', 'relationship'])
+        $user = User::select(['id', 'name', 'avatar', 'cover_avatar', 'follower','phone', 'friend_counts', 'address', 'hometown', 'gender', 'birthday', 'relationship'])
             ->where('id', $request->id)
             ->whereNull('deleted_at')
             ->first();
