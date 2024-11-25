@@ -184,12 +184,13 @@ class FriendRequestController extends Controller
             $sort = $request->input('sort', 'desc');
             $perPage = $request->input('per_page', 10); // Số lượng item trên mỗi trang
 
-            $requests = FriendRequests::where('receiver', $user->id)
+            $requests = FriendRequests::where('receiver', operator: $user->id)
                 ->with('sender:id,name,avatar')
                 ->orderBy('created_at', $sort)
                 ->paginate($perPage);
 
             return $this->sendResponse([
+                'id' => $user->id,
                 'requests' => $requests->items(),
                 'total' => $requests->total(),
                 'current_page' => $requests->currentPage(),

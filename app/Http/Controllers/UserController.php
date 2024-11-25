@@ -25,7 +25,6 @@ class UserController extends Controller
 
         $user = User::select(['id', 'name', 'avatar', 'cover_avatar', 'follower', 'friend_counts', 'address', 'hometown', 'gender', 'birthday', 'relationship'])
             ->where('id', $request->id)
-            ->where('is_active', 0)
             ->whereNull('deleted_at')
             ->first();
 
