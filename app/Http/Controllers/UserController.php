@@ -138,13 +138,19 @@ class UserController extends Controller
             'message' => 'Cập nhật ảnh đại diện thành công!'
         ], 200);
     }
-    public function listAvatar()
+    public function listAvatar(Request $request)
     {
-        $data = Post::where('user_id', auth()->user()->id)
+        $friendController = new FriendController();
+        $userId = auth()->user()->id;
+        if($request->has('user')){
+            $userId = $request->user;
+        }
+
+        $data = Post::where('user_id', $userId)
             ->where('type', 'avatar')
             ->orderByDesc('created_at')
+            ->whereIn('status',$friendController->checkPermisionFriend($userId))
             ->paginate(5);
-
         return $this->sendResponse($data);
     }
     public function destroyAvatar(Request $request)
@@ -185,11 +191,18 @@ class UserController extends Controller
             'message' => 'Cập nhật ảnh bìa thành công!'
         ], 200);
     }
-    public function listBackground()
+    public function listBackground(Request $request)
     {
-        $data = Post::where('user_id', auth()->user()->id)
+        $friendController = new FriendController();
+        $userId = auth()->user()->id;
+        if($request->has('user')){
+            $userId = $request->user;
+        }
+
+        $data = Post::where('user_id', $userId)
             ->where('type', 'background')
             ->orderByDesc('created_at')
+            ->whereIn('status',$friendController->checkPermisionFriend($userId))
             ->paginate(5);
 
         return $this->sendResponse($data);

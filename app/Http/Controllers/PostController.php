@@ -42,7 +42,6 @@ class PostController extends Controller
 
         $post
             ->whereIn('status', ['public', 'friend'])
-            // ->where('type', 'post')
             ->where('is_active', '1');
         $post->orderBy('created_at', 'desc');
 
@@ -184,7 +183,7 @@ class PostController extends Controller
             ], 403);
         }
     }
-    public function getPostByUser($id)
+    public function getPostByUser($id,Request $request)
     {
         $posts = Post::with(
             'post_share',
@@ -193,7 +192,7 @@ class PostController extends Controller
             'user_emotion'
         )
             ->where('user_id', $id)
-            ->where('type', 'post')
+            // ->where('type', 'post')
             ->where('is_active', '1');
 
         if (auth()->user()->id == $id)
@@ -203,10 +202,20 @@ class PostController extends Controller
         else
             $posts = $posts->where('status', 'public');
 
+        $limit = 5; // Số lượng bài viết mỗi lần tải
+        $offset = $request->input('offset', 0); // Vị trí bắt đầu lấy dữ liệu
+        
         $posts = $posts->orderBy('created_at', 'desc')
-            ->take(5)
+            ->skip($offset)
+            ->take($limit)
             ->get();
 
-        return response()->json($posts);
+        $hasMore = $posts->count() == $limit; // Kiểm tra còn dữ liệu không
+        
+        return response()->json([
+            'posts' => $posts,
+            'hasMore' => $hasMore,
+            'nextOffset' => $offset + $limit
+        ]);
     }
 }
