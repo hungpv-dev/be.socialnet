@@ -19,6 +19,24 @@ class FriendController extends Controller
     {
         $this->blockController = new BlockController;
     }
+
+    public function checkPermisionFriend($friendId){
+        $roles = ['public'];
+        $user = auth()->user()->id;
+        if($friendId == $user){
+            $roles = [...$roles,'friend','private'];
+        }else{
+            $friendship = Friend::where(function ($query) use ($user, $friendId) {
+                $query->where('user1', $user)->where('user2', $friendId)
+                    ->orWhere('user1', $friendId)->where('user2', $user);
+            })->first();
+            if($friendship){
+                $roles[] = 'friend';
+            }
+        }
+        return $roles;
+    }
+
     public function checkFriendStatus($user)
     {
         $mine = auth()->user()->id;

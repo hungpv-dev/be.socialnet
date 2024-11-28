@@ -193,7 +193,7 @@ class FriendRequestController extends Controller
             ->with('sender:id,name,avatar,address,hometown,relationship,follower')
             ->orderBy('id', 'desc') // Sắp xếp theo id giảm dần
             ->skip($index) // Bỏ qua số lượng yêu cầu đã có từ chỉ mục bắt đầu
-            ->take(10) // Lấy 10 kết quả từ chỉ mục đó
+            ->take($request->input('take',10)) // Lấy 10 kết quả từ chỉ mục đó
             ->get(); // Lấy dữ liệu
 
         // Biến đổi dữ liệu để thêm thông tin về bạn chung
