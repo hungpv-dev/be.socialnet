@@ -62,7 +62,7 @@ class FriendController extends Controller
 
         return ['add', 'chat'];
     }
-    
+
     //Tìm kiếm bạn bè
     public function findFriend(Request $request)
     {
@@ -82,7 +82,7 @@ class FriendController extends Controller
         $query = User::whereIn('id', $friendIds)
             ->where('is_active', 0)
             ->whereNull('deleted_at')
-            ->select('id', 'name','avatar', 'address', 'hometown', 'gender', 'relationship', 'follower', 'friend_counts', 'is_online')
+            ->select('id', 'name', 'avatar', 'address', 'hometown', 'gender', 'relationship', 'follower', 'friend_counts', 'is_online')
             ->where('name', 'LIKE', "%" . $request->name . "%")
             ->whereNotIn('id', function ($subQuery) use ($user) {
                 $subQuery->select('user_block')->from('blocks')->where('user_is_blocked', $user->id);
@@ -159,8 +159,7 @@ class FriendController extends Controller
     {
         $userId = $request->id;
         if (!$userId) return $this->sendResponse(['message' => 'Đã có lỗi xảy ra!'], 404);
-        $sort = $request->input('sort', 'desc');
-        $perPage = $request->input('per_page', 10);
+        $index = $request->index;
 
         $listFriend = Friend::where('user1', $userId)
             ->pluck('user2')
@@ -175,11 +174,12 @@ class FriendController extends Controller
             ->whereNull('deleted_at')
             ->whereIn('id', $listFriend)
             ->whereNotIn('id', $listBlock)
-            ->select(['id', 'name', 'address', 'hometown','avatar', 'relationship', 'follower', 'friend_counts'])
-            ->orderBy('id', $sort)
-            ->paginate($perPage);
+            ->select(['id', 'name', 'address', 'hometown', 'relationship', 'follower', 'friend_counts'])
+            ->skip($index)
+            ->take(10)
+            ->get();
 
-        foreach ($data->items() as $item) {
+        foreach ($data as $item) {
             $item->friend_common = $this->findCommonFriends(auth()->user()->id, $item->id);
             $item->button = $this->checkFriendStatus($item->id);
         }

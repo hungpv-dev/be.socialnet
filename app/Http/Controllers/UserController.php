@@ -74,7 +74,7 @@ class UserController extends Controller
         $query = User::where('name', 'LIKE', "%" . $request->name . "%")
             ->where('is_active', 0)
             ->whereNull('deleted_at')
-            ->select('id', 'name', 'address', 'hometown', 'gender', 'relationship', 'follower', 'friend_counts', 'is_online')
+            ->select('id','avatar' , 'name', 'address', 'hometown', 'gender', 'relationship', 'follower', 'friend_counts', 'is_online')
             ->where('id', '!=', $currentUserId)
             ->whereNotIn('id', function ($subQuery) use ($currentUserId) {
                 $subQuery->select('user_block')

@@ -151,7 +151,7 @@ class ChatRoomController extends Controller
             if (!in_array('user_'.$user_id, $outs)) {
                 $outs[] = 'user_'.$user_id;
             }
-            
+
             $room->update(['outs' => $outs,'last_remove'=> $removes]);
             createNofiMessage($room->id,$content);
             DB::commit();
