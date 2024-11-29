@@ -13,6 +13,7 @@ use App\Repositories\MessageRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class ChatRoomController extends Controller
@@ -42,6 +43,7 @@ class ChatRoomController extends Controller
         ->get();
         return ChatRoomResource::collection($chatrooms);
     }
+
     public function search(Request $request){
         $name = $request->input('name', '');
         $user_id = Auth::id();

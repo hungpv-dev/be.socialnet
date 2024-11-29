@@ -14,7 +14,7 @@ class SendMessageBroadcast extends Notification implements ShouldQueue
     /**
      * Create a new notification instance.
      */
-    public function __construct(public $message, public $room)
+    public function __construct(public $message, public $room, public $user_id)
     {
         //
     }
@@ -34,10 +34,10 @@ class SendMessageBroadcast extends Notification implements ShouldQueue
      */
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
-        $messageType = !empty($this->message->files) ? 'đã gửi hình ảnh' : ': ' . $this->message->body;
+        $messageType = !empty($this->message->files) ? 'đã gửi hình ảnh' : ': ' . ($this->message ? $this->message->body : '');
         
         return new BroadcastMessage([
-            'notification' => $this->room->name['user_' . $this->message->user_id] . ' ' . $messageType,
+            'notification' => $this->room->name['user_' . $this->user_id] . ' ' . $messageType,
             'time' => now()->format('H:i d/m/Y'),
             'room_id' => $this->room->id
         ]);

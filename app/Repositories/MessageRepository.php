@@ -108,7 +108,7 @@ class MessageRepository
             broadcast(new RefreshUsers($room));
             $users = User::whereIn('id', $userIds)->get();
             foreach ($users as $u) {
-                $u->notify(new SendMessageBroadcast(end($listMessage), $room));
+                $u->notify(new SendMessageBroadcast(end($listMessage), $room,$u->id));
             }
             
             return response($listMessage, 200);
