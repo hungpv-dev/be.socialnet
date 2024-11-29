@@ -111,7 +111,7 @@ class StoryController extends Controller
     {
         $story = Story::findOrFail($id);
 
-        return $this->sendResponse($story);
+        return $this->sendResponse($story->load('user'));
     }
 
     /**
