@@ -39,6 +39,7 @@ class UserFactory extends Factory
             'relationship' => $this->faker->randomElement(['single', 'married', 'divorced', 'widowed']),
             'follower' => $this->faker->numberBetween(0, 1000),
             'friend_counts' => $this->faker->numberBetween(0, 500),
+            'is_admin' => false,
         ];
     }
 

@@ -16,7 +16,8 @@ return new class extends Migration
             $table->foreignId('report_type_id')->references('id')->on('report_types');
             $table->morphs('reportable');
             $table->string(column: 'content');
-            $table->boolean(column: 'status')->default(0)->comment('0: Chưa xử lý, 1: Đã xử lý');
+            // $table->boolean(column: 'status')->default(0)->comment('0: Chưa xử lý, 1: Đã xử lý');
+            $table->enum('status', ['pending', 'approved', 'declined'])->default('pending')->comment("Trạng thái đơn tố cáo");
             $table->foreignId('user_id')->references('id')->on('users');
             $table->timestamps();
         });
