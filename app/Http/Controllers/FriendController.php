@@ -174,7 +174,7 @@ class FriendController extends Controller
             ->whereNull('deleted_at')
             ->whereIn('id', $listFriend)
             ->whereNotIn('id', $listBlock)
-            ->select(['id', 'name', 'address', 'hometown', 'relationship', 'follower', 'friend_counts'])
+            ->select(['id', 'name','avatar', 'address', 'hometown', 'relationship', 'follower', 'friend_counts'])
             ->skip($index)
             ->take(10)
             ->get();

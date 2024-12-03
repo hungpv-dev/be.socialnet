@@ -145,7 +145,9 @@ class FriendRequestController extends Controller
             }
 
             $existingRequest->delete();
-            $request->user()->follower--;
+            if($request->user()->follower > 0){
+                $request->user()->follower--;
+            }
             $request->user()->save();
             return $this->sendResponse(['message' => 'Từ chối lời mời kết bạn thành công!']);
         }

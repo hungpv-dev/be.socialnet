@@ -142,19 +142,57 @@ class PostController extends Controller
     {
         try {
             $post = Post::findOrFail($id);
-
             $this->authorize('update', $post);
 
-            $post->fill($request->only(['content', 'status']));
+            // Cập nhật nội dung và trạng thái
+            $post->content = $request->input('content', $post->content);
+            $post->status = $request->input('status', $post->status);
 
+            // Xử lý files
             if ($request->hasFile('files')) {
-                $post->data = (new FileController($request->file('files')))->posts();
+                $newFiles = (new FileController($request->file('files')))->posts();
+                // Nếu có keep_files, kết hợp với files mới
+                if ($request->has('keep_files')) {
+                    $keepFiles = json_decode($request->keep_files, true);
+                    if (is_array($keepFiles) && isset($keepFiles['image']) && isset($keepFiles['video'])) {
+                        $currentFiles = $post->data;
+                        $keptFiles = [
+                            'image' => array_filter($currentFiles['image'] ?? [], function($file) use ($keepFiles) {
+                                return in_array($file, $keepFiles['image']);
+                            }),
+                            'video' => array_filter($currentFiles['video'] ?? [], function($file) use ($keepFiles) {
+                                return in_array($file, $keepFiles['video']);
+                            })
+                        ];
+                        
+                        // Kết hợp files giữ lại với files mới
+                        $post->data = [
+                            'image' => array_merge($keptFiles['image'], $newFiles['image'] ?? []),
+                            'video' => array_merge($keptFiles['video'], $newFiles['video'] ?? [])
+                        ];
+                    } else {
+                        $post->data = $newFiles;
+                    }
+                } else {
+                    $post->data = $newFiles;
+                }
+            } else if ($request->has('keep_files')) {
+                // Nếu chỉ có keep_files mà không có files mới
+                $keepFiles = json_decode($request->keep_files, true);
+                if (is_array($keepFiles) && isset($keepFiles['image']) && isset($keepFiles['video'])) {
+                    $currentFiles = $post->data;
+                    $post->data = $keepFiles;
+                }
             }
 
             $post->save();
 
             return $this->sendResponse([
-                'post' => $post,
+                'data' => $post->load('post_share',
+                'post_share.user:id,name,avatar',
+                'user:id,name,avatar',
+                'user_emotion'),
+                'add' => $request->all(),
                 'message' => 'Cập nhật bài viết thành công!'
             ], 200);
         } catch (ModelNotFoundException $e) {
