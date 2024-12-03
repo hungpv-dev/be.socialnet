@@ -14,7 +14,7 @@ use App\Events\CommentEvent\CommentNotification;
 class CommentControler extends Controller
 {
 
-    public function index() {} 
+    public function index() {}
     public function store(Request $request)
     {
         //Báo lỗi nếu không truyền lên nội dung và id bài post
@@ -130,7 +130,7 @@ class CommentControler extends Controller
         if ($request->content) {
             $data['text'] = $request->content;
         }
-        
+
         // Cập nhật bình luận
         $comment->content = json_encode($data);
         $comment->save();
@@ -148,17 +148,17 @@ class CommentControler extends Controller
         if ($comment->user_id != auth()->user()->id) {
             return response()->json(['message' => 'Bạn không có quyền xóa bình luận này!'], 400);
         }
-        
+
         // Xóa tất cả các bình luận con
         $this->deleteChildrenComments($comment->id);
-        
+
         $comment->delete();
         $post->comment_count = $post->comments()->count();
         $post->save();
-        
+
         return response()->json(['message' => 'Xóa bình luận thành công'], 200);
     }
-    private function deleteChildrenComments($parentId)
+    public function deleteChildrenComments($parentId)
     {
         $childrenComments = Comment::where('parent_id', $parentId)->get();
 

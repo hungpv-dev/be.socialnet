@@ -31,6 +31,7 @@ return new class extends Migration
             $table->enum('relationship', ['single', 'married', 'divorced', 'widowed'])->nullable();
             $table->unsignedBigInteger('follower')->default(0);
             $table->unsignedBigInteger('friend_counts')->default(0);
+            $table->boolean('is_admin')->default(false);
             $table->timestamps();
             $table->softDeletes();
         });
