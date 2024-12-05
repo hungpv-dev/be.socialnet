@@ -2,29 +2,30 @@
 
 namespace App\Notifications\Post;
 
-use App\Models\UserStories;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Str;
 
 class EmotionNotification extends Notification
 {
     use Queueable;
     public $data = [];
-    public function __construct(public $id, public $message, public $type)
+
+    public function __construct($post_id, $message, $type)
     {
         $this->data = [
+            'post_id' => $post_id,
             'avatar' => auth()->user()->avatar,
-            'message' => '<b>' . auth()->user()->name . '</b> ' . $this->message
+            'message' => '<b>' . auth()->user()->name . '</b> ' . $message,
+            'type' => $type
         ];
-        $this->data['post_id'] = $this->id;
-        $this->data['comment_id'] = $this->id;
     }
+
     public function via(object $notifiable): array
     {
-        return ['broadcast', 'database'];
+        return ['database', 'broadcast'];
     }
+
     public function toArray(object $notifiable): array
     {
         return $this->data;

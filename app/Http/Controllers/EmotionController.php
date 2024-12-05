@@ -11,6 +11,24 @@ use Illuminate\Support\Facades\Auth;
 
 class EmotionController extends Controller
 {
+
+    public function index(Request $request){
+        $id = $request->input('id');
+        $type = $request->input('type');
+        
+        try {
+            if ($type === 'post') {
+                $model = Post::findOrFail($id);
+            } else {
+                $model = Comment::findOrFail($id);
+            }
+            
+            $emotions = $model->emotions()->with('user:id,name,avatar')->paginate(10);
+            return $this->sendResponse($emotions);
+        } catch (ModelNotFoundException $e) {
+            return $this->sendResponse(['message' => 'Không tìm thấy đối tượng!'], 404);
+        }
+    }
     public function store(Request $request){
         $id = $request->input("id");
         $type = $request->input("type");

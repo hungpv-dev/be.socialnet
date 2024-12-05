@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\FriendRequests;
 use App\Models\User;
 use App\Models\Story;
 use App\Models\UserStories;
@@ -20,17 +21,33 @@ class StoryController extends Controller
     {
         $user = Auth::user();
         $friendIds = (new PostController)->getFriendIds($user);
+        $followerIds = FriendRequests::where('sender', $user->id)->pluck('receiver')->toArray();
+        
         $friendStories = User::whereIn('id', $friendIds)
             ->whereHas('stories', function($query) {
                 $query->where('created_at', '>=', now()->subHours(24))
-                    ->where('status', '!=', 'private');
+                    ->whereIn('status', ['public', 'friend']);
             })
             ->with(['stories' => function($query) {
                 $query->where('created_at', '>=', now()->subHours(24))
-                    ->where('status', '!=', 'private')
+                    ->whereIn('status', ['public', 'friend'])
                     ->orderBy('created_at', 'asc');
             }, 'stories.user_emotion'])
             ->get();
+
+        $followerStories = User::whereIn('id', $followerIds)
+            ->whereHas('stories', function($query) {
+                $query->where('created_at', '>=', now()->subHours(24))
+                    ->where('status', 'public');
+            })
+            ->with(['stories' => function($query) {
+                $query->where('created_at', '>=', now()->subHours(24))
+                    ->where('status', 'public')
+                    ->orderBy('created_at', 'asc');
+            }, 'stories.user_emotion'])
+            ->get();
+
+        $friendStories = $friendStories->concat($followerStories);
 
         $userStories = User::where('id', $user->id)
             ->whereHas('stories', function($query) {
@@ -74,6 +91,7 @@ class StoryController extends Controller
             'user_id' => $request->user()->id,
             'file' => $data,
             'status' => $validatedData['status'],
+            'created_at' => now(),
         ]);
 
         $friendIds = (new PostController())->getFriendIds(Auth::user());

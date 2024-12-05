@@ -57,7 +57,10 @@ class UserController extends Controller
             $user = $request->user();
             $user->update($validator->validated());
 
-            return $this->sendResponse('Cập nhật thông tin cá nhân thành công');
+            return $this->sendResponse([
+                'message' => 'Cập nhật thông tin cá nhân thành công',
+                'user' => $user
+            ]);
         }
 
         return $this->sendResponse(['error' => 'Phương thức không được hỗ trợ'], 405);
@@ -219,5 +222,12 @@ class UserController extends Controller
                 return $this->sendResponse(['message' => 'Không có ảnh bìa để xóa!'], 404);
             }
         }
+    }
+
+    public function isLogin(){
+        $user = auth()->user();
+        $user->is_login = true;
+        $user->save();
+        return $this->sendResponse($user);
     }
 }
