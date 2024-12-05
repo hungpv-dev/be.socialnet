@@ -115,6 +115,7 @@ Route::middleware(['auth:api'])->group(function () {
 
     Route::prefix('user/')->group(function () {
         Route::post('find', [UserController::class, 'findUser']);
+        Route::post('login', [UserController::class, 'isLogin']);
         Route::get('{id}', [UserController::class, 'getProfile']);
         Route::put('profile/update', [UserController::class, 'updateProfile']);
         Route::prefix('avatar/')->group(function () {

@@ -80,7 +80,7 @@ class FriendController extends Controller
 
 
         $query = User::whereIn('id', $friendIds)
-            ->where('is_active', 0)
+            // ->where('is_active', 0)
             ->whereNull('deleted_at')
             ->select('id', 'name', 'avatar', 'address', 'hometown', 'gender', 'relationship', 'follower', 'friend_counts', 'is_online')
             ->where('name', 'LIKE', "%" . $request->name . "%")

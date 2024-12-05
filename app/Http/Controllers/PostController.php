@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Notifications\CreatePost;
 use Illuminate\Support\Facades\Log;
 use App\Http\Resources\PostResource;
+use App\Models\FriendRequests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -36,13 +37,21 @@ class PostController extends Controller
         );
 
         $friendIds = $this->getFriendIds($user);
+        $followerIds = FriendRequests::where('sender', $user->id)->pluck('receiver')->toArray();
 
         $post->whereNotIn('id', $ids);
-        $post->whereIn('user_id', $friendIds);
 
-        $post
-            ->whereIn('status', ['public', 'friend'])
-            ->where('is_active', '1');
+        $post->where(function($query) use ($friendIds, $followerIds) {
+            $query->where(function($subQuery) use ($friendIds) {
+                $subQuery->whereIn('user_id', $friendIds)
+                         ->whereIn('status', ['public', 'friend']);
+            })->orWhere(function($subQuery) use ($followerIds) {
+                $subQuery->whereIn('user_id', $followerIds)
+                         ->where('status', 'public');
+            });
+        });
+
+        $post->where('is_active', '1');
         $post->orderBy('created_at', 'desc');
 
         return $this->sendResponse($post->take(5)->get());
