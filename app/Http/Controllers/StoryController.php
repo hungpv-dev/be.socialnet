@@ -247,7 +247,9 @@ class StoryController extends Controller
 
             $story->save();
 
-            return $this->sendResponse(['message' => 'Đã cập nhật biểu cảm'], 200);
+            return $this->sendResponse([
+                'message' => 'Đã cập nhật biểu cảm',
+            ], 200);
         }
 
 

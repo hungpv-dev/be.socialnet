@@ -18,7 +18,8 @@ class Story extends Model
     ];
 
     protected $casts = [
-        'file' => 'array'
+        'file' => 'array',
+        'created_at' => 'datetime'
     ];
 
     public function user(){
