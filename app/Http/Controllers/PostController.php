@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Notifications\CreatePost;
 use Illuminate\Support\Facades\Log;
 use App\Http\Resources\PostResource;
+use App\Jobs\LogActivityJob;
 use App\Models\FriendRequests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -78,7 +79,6 @@ class PostController extends Controller
                 $postShare->share_count++;
                 $postShare->save();
                 $post->share_id = $postShare->id;
-                
             }
         }
         $post->user_id = $user_id;
@@ -105,13 +105,19 @@ class PostController extends Controller
                 continue;
             }
         }
-        
+
         $post->load(
             'post_share',
             'post_share.user:id,name,avatar',
             'user:id,name,avatar',
             'user_emotion'
         );
+
+        LogActivityJob::dispatch('post', $user, $post, [
+            'avatar' => $user->avatar,
+            'user' => $user->name,
+        ], "đã thêm một bài viết");
+
         return $this->sendResponse([
             'data' => $post,
             'message' => 'Thêm mới bài viết thành công!'
@@ -173,7 +179,7 @@ class PostController extends Controller
                                 return in_array($file, $keepFiles['video']);
                             })
                         ];
-                        
+
                         // Kết hợp files giữ lại với files mới
                         $post->data = [
                             'image' => array_merge($keptFiles['image'], $newFiles['image'] ?? []),
@@ -251,14 +257,14 @@ class PostController extends Controller
 
         $limit = 5; // Số lượng bài viết mỗi lần tải
         $offset = $request->input('offset', 0); // Vị trí bắt đầu lấy dữ liệu
-        
+
         $posts = $posts->orderBy('created_at', 'desc')
             ->skip($offset)
             ->take($limit)
             ->get();
 
         $hasMore = $posts->count() == $limit; // Kiểm tra còn dữ liệu không
-        
+
         return response()->json([
             'posts' => $posts,
             'hasMore' => $hasMore,

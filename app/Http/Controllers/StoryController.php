@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\LogActivityJob;
 use App\Models\FriendRequests;
 use App\Models\User;
 use App\Models\Story;
@@ -22,7 +23,7 @@ class StoryController extends Controller
         $user = Auth::user();
         $friendIds = (new PostController)->getFriendIds($user);
         $followerIds = FriendRequests::where('sender', $user->id)->pluck('receiver')->toArray();
-        
+
         $friendStories = User::whereIn('id', $friendIds)
             ->whereHas('stories', function($query) {
                 $query->where('created_at', '>=', now()->subHours(24))
@@ -59,7 +60,7 @@ class StoryController extends Controller
             }, 'stories.user_emotion'])
             ->get();
         $friendStories = $userStories->concat($friendStories);
-        
+
         return $this->sendResponse($friendStories);
     }
 
@@ -72,6 +73,8 @@ class StoryController extends Controller
             'data' => 'required',
             'status' => 'required|in:public,friend,private',
         ]);
+
+        $user = $request->user();
 
         if ($request->hasFile('data')) {
             $file = $request->file('data');
@@ -93,6 +96,11 @@ class StoryController extends Controller
             'status' => $validatedData['status'],
             'created_at' => now(),
         ]);
+
+        LogActivityJob::dispatch('post', $user, $story, [
+            'avatar' => $user->avatar,
+            'user' => $user->name,
+        ], "đã thêm một bài viết");
 
         $friendIds = (new PostController())->getFriendIds(Auth::user());
         $users = User::whereIn('id', $friendIds)->get();

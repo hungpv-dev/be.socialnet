@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\{
 use App\Http\Controllers\Admin;
 
 use App\Http\Controllers\{
+    ActivityLogController,
     BlockController,
     ChatRoomController,
     CommentControler,
@@ -29,7 +30,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Route;
 
-
+Route::middleware('auth:api')->get('/user/activity-log', [ActivityLogController::class, 'getUserActivityLog']);
 
 Route::post('register', [RegisterController::class, 'register']);
 Route::post('register/verify', [RegisterController::class, 'verify']);
@@ -145,4 +146,5 @@ Route::middleware(['auth:api'])->group(function () {
 Route::prefix('admin')->group(function(){
     Route::resource('reports/type', Admin\ReportTypeController::class);
     Route::resource('reports', Admin\ReportController::class);
+    Route::resource('users', Admin\UserController::class);
 });

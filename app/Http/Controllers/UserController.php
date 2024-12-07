@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Friend;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Jobs\LogActivityJob;
 use App\Models\Post;
 use Illuminate\Support\Facades\Validator;
 
@@ -23,7 +24,7 @@ class UserController extends Controller
         if (!$request->id)
             return $this->sendResponse(['message' => 'Đã có lỗi xảy ra!'], 404);
 
-        $user = User::select(['id', 'name', 'avatar', 'cover_avatar', 'follower','phone', 'friend_counts', 'address', 'hometown', 'gender', 'birthday', 'relationship'])
+        $user = User::select(['id', 'name', 'avatar', 'cover_avatar', 'follower', 'phone', 'friend_counts', 'address', 'hometown', 'gender', 'birthday', 'relationship'])
             ->where('id', $request->id)
             ->whereNull('deleted_at')
             ->first();
@@ -55,12 +56,34 @@ class UserController extends Controller
             }
 
             $user = $request->user();
-            $user->update($validator->validated());
+            if (!$user) {
+                return $this->sendResponse(['error' => 'Không tìm thấy người dùng'], 404);
+            }
 
-            return $this->sendResponse([
-                'message' => 'Cập nhật thông tin cá nhân thành công',
-                'user' => $user
-            ]);
+            // Gán dữ liệu mới vào model
+            $user->fill($validator->validated());
+
+            // Kiểm tra xem có thay đổi nào không
+            if (!$user->isDirty()) {
+                return $this->sendResponse(['message' => 'Không có thay đổi nào cần cập nhật'], 200);
+            }
+
+            // Lưu thay đổi nếu có
+            $user->save();
+
+            LogActivityJob::dispatch(
+                'user_account',  // Tên hành động
+                $user,  // Đối tượng bị tác động
+                $user,  // Người thực hiện hành động (cùng đối tượng vì người dùng tự cập nhật thông tin của mình)
+                [
+                    'changes' => $user->getChanges(),  // Chỉ ghi lại các thay đổi
+                    'avatar' => $user->avatar,         // Đường dẫn ảnh đại diện (nếu có)
+                    'name' => $user->name,             // Tên người dùng
+                ],
+                "đã cập nhật thông tin trang cá nhân"  // Nội dung log
+            );
+
+            return $this->sendResponse(['message' => 'Cập nhật thông tin cá nhân thành công']);
         }
 
         return $this->sendResponse(['error' => 'Phương thức không được hỗ trợ'], 405);
@@ -77,7 +100,7 @@ class UserController extends Controller
         $query = User::where('name', 'LIKE', "%" . $request->name . "%")
             ->where('is_active', 0)
             ->whereNull('deleted_at')
-            ->select('id','avatar' , 'name', 'address', 'hometown', 'gender', 'relationship', 'follower', 'friend_counts', 'is_online')
+            ->select('id', 'avatar', 'name', 'address', 'hometown', 'gender', 'relationship', 'follower', 'friend_counts', 'is_online')
             ->where('id', '!=', $currentUserId)
             ->whereNotIn('id', function ($subQuery) use ($currentUserId) {
                 $subQuery->select('user_block')
@@ -137,6 +160,18 @@ class UserController extends Controller
         $request->user()->avatar = $fullPath;
         $request->user()->save();
 
+        LogActivityJob::dispatch(
+            'user_account',
+            $request->user(),
+            $request->user(),
+            [
+                'changes' => $request->user()->getChanges(),
+                'avatar' => $request->user()->avatar,
+                'user' => $request->user()->name,
+            ],
+            "đã cập nhật ảnh đại diện"
+        );
+
         return $this->sendResponse([
             'message' => 'Cập nhật ảnh đại diện thành công!'
         ], 200);
@@ -145,14 +180,14 @@ class UserController extends Controller
     {
         $friendController = new FriendController();
         $userId = auth()->user()->id;
-        if($request->has('user')){
+        if ($request->has('user')) {
             $userId = $request->user;
         }
 
         $data = Post::where('user_id', $userId)
             ->where('type', 'avatar')
             ->orderByDesc('created_at')
-            ->whereIn('status',$friendController->checkPermisionFriend($userId))
+            ->whereIn('status', $friendController->checkPermisionFriend($userId))
             ->paginate(5);
         return $this->sendResponse($data);
     }
@@ -162,6 +197,19 @@ class UserController extends Controller
             if ($request->user()->avatar) {
                 $request->user()->avatar = null;
                 $request->user()->save();
+
+                LogActivityJob::dispatch(
+                    'user_account',
+                    $request->user(),
+                    $request->user(),
+                    [
+                        'previous_avatar' => $request->user()->avatar,
+                        'action' => 'deleted',
+                        'avatar' => $request->user()->avatar,
+                        'user' => $request->user()->name,
+                    ],
+                    "đã xóa ảnh đại diện"
+                );
 
                 return $this->sendResponse(['message' => 'Xóa ảnh đại diện thành công!']);
             } else {
@@ -190,6 +238,18 @@ class UserController extends Controller
         $request->user()->cover_avatar = $fullPath;
         $request->user()->save();
 
+        LogActivityJob::dispatch(
+            'user_account',
+            $request->user(),
+            $request->user(),
+            [
+                'changes' => $request->user()->getChanges(),
+                'avatar' => $request->user()->cover_avatar,
+                'user' => $request->user()->name,
+            ],
+            "đã cập nhật ảnh bìa"
+        );
+
         return $this->sendResponse([
             'message' => 'Cập nhật ảnh bìa thành công!'
         ], 200);
@@ -198,14 +258,14 @@ class UserController extends Controller
     {
         $friendController = new FriendController();
         $userId = auth()->user()->id;
-        if($request->has('user')){
+        if ($request->has('user')) {
             $userId = $request->user;
         }
 
         $data = Post::where('user_id', $userId)
             ->where('type', 'background')
             ->orderByDesc('created_at')
-            ->whereIn('status',$friendController->checkPermisionFriend($userId))
+            ->whereIn('status', $friendController->checkPermisionFriend($userId))
             ->paginate(5);
 
         return $this->sendResponse($data);
@@ -216,6 +276,19 @@ class UserController extends Controller
             if ($request->user()->cover_avatar) {
                 $request->user()->cover_avatar = null;
                 $request->user()->save();
+
+                LogActivityJob::dispatch(
+                    'user_account',
+                    $request->user(),
+                    $request->user(),
+                    [
+                        'previous_cover_avatar' => $request->user()->cover_avatar,
+                        'action' => 'deleted',
+                        'avatar' => $request->user()->cover_avatar,
+                        'user' => $request->user()->name,
+                    ],
+                    "đã xóa ảnh bìa"
+                );
 
                 return $this->sendResponse(['message' => 'Xóa ảnh bìa thành công!']);
             } else {

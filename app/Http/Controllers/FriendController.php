@@ -8,6 +8,7 @@ use App\Models\ChatRoom;
 use Illuminate\Http\Request;
 use App\Models\FriendRequests;
 use App\Http\Controllers\Controller;
+use App\Jobs\LogActivityJob;
 use App\Models\Block;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Log;
@@ -149,6 +150,14 @@ class FriendController extends Controller
             $request->user()->follower--;
             $request->user()->friend_counts--;
             $request->user()->save();
+
+            // Ghi lại hoạt động xóa bạn
+            LogActivityJob::dispatch('remove_friend', $user, $friendUser, [
+                'avatar' => $friendUser->avatar,
+                'client' => $friendUser->name,
+                'user' => $user->name,
+            ], "đã xóa bạn bè với");
+
             return $this->sendResponse('Xóa mối quan hệ bạn bè thành công!');
         }
 
