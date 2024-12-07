@@ -17,7 +17,7 @@ return new class extends Migration
             $table->json('file')->comment('Ảnh, video, chữ');
             $table->enum('status', ['public', 'friend', 'private'])->default('friend');
             $table->integer('user_count')->default(0);
-            $table->timestamp('created_at');
+            $table->dateTime('created_at')->nullable();
         });
     }
 
