@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\LogActivityJob;
 use App\Models\FriendRequests;
 use App\Models\User;
 use App\Models\Friend;
@@ -64,6 +65,21 @@ class FriendRequestController extends Controller
             $receiverUser->follower++;
             $receiverUser->save();
 
+            // Ghi lại lịch sử gửi lời mời kết bạn
+            LogActivityJob::dispatch('friend_request', $user, $receiverUser, [
+                'user' => $user->name,
+                'client' => $receiverUser->name,
+                'avatar' => $receiverUser->avatar,
+                'created_at' => now(),
+            ], "đã gửi lời mời kết bạn cho");
+            // Ghi lại lịch sử gửi lời mời kết bạn
+            LogActivityJob::dispatch('friend_request', $receiverUser, $user, [
+                'user' => $receiverUser->name,
+                'client' => $user->name,
+                'avatar' => $user->avatar,
+                'created_at' => now(),
+            ], "đã gửi lời mời kết bạn cho");
+
             return $this->sendResponse(['message' => 'Gửi lời mời kết bạn thành công!']);
         }
     }
@@ -116,6 +132,48 @@ class FriendRequestController extends Controller
             $request->user()->friend_counts++;
             $request->user()->save();
 
+            // Ghi lại lịch sử gửi lời mời kết bạn
+            LogActivityJob::dispatch(
+                'friend_request',  // Tên hành động
+                $user,  // Người gây ra hành động
+                $sender,  // Đối tượng bị tác động
+                [
+                    'user' => $user->name,
+                    'client' => $sender->name,
+                    'avatar' => $sender->avatar,
+                    'created_at' => now(),
+                ],
+                "đã chấp nhận lời mời kết bạn của"  // Nội dung log
+            );
+
+            // Ghi lại lịch sử kết bạn
+            LogActivityJob::dispatch(
+                'friendship',  // Tên hành động
+                $user,  // Người gây ra hành động
+                $sender,  // Đối tượng bị tác động
+                [
+                    'user' => $user->name,
+                    'client' => $sender->name,
+                    'avatar' => $sender->avatar,
+                    'created_at' => now(),
+                ],
+                "đã trở thành bạn bè với"  // Nội dung log
+            );
+
+            // Ghi lại lịch sử kết bạn
+            LogActivityJob::dispatch(
+                'friendship',  // Tên hành động
+                $sender,  // Người gây ra hành động
+                $user,  // Đối tượng bị tác động
+                [
+                    'user' => $sender->name,
+                    'client' => $user->name,
+                    'avatar' => $user->avatar,
+                    'created_at' => now(),
+                ],
+                "đã trở thành bạn bè với"  // Nội dung log
+            );
+
             return $this->sendResponse(['message' => 'Chấp nhận lời mời kết bạn thành công!']);
         }
     }
@@ -149,6 +207,21 @@ class FriendRequestController extends Controller
                 $request->user()->follower--;
             }
             $request->user()->save();
+
+            // Ghi lại lịch sử từ chối lời mời kết bạn
+            LogActivityJob::dispatch(
+                'friend_request',  // Tên hành động
+                $user,  // Người thực hiện hành động
+                $sender,  // Đối tượng bị tác động
+                [
+                    'user' => $user->name,
+                    'client' => $sender->name,
+                    'avatar' => $sender->name,
+                    'created_at' => now(),
+                ],
+                "đã từ chối lời mời kết bạn của"  // Nội dung log
+            );
+
             return $this->sendResponse(['message' => 'Từ chối lời mời kết bạn thành công!']);
         }
     }

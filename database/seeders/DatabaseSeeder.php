@@ -15,9 +15,9 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // $this->call(UserSeeder::class);
-        ChatType::insert([['id' => 1,'name' => 'Chat riêng tư'],['id' => 2,'name' => 'Chat nhóm']]);
-        $this->call(ChatRoomSeeder::class);
-        $this->call(MessageSeeder::class);
+        // ChatType::insert([['id' => 1,'name' => 'Chat riêng tư'],['id' => 2,'name' => 'Chat nhóm']]);
+        // $this->call(ChatRoomSeeder::class);
+        // $this->call(MessageSeeder::class);
         // $this->call(FriendRequestSeeder::class);
         // $this->call(FriendSeeder::class);
         // $this->call(BlockSeeder::class);

@@ -29,6 +29,7 @@ class ReportController extends Controller
         $user = $request->input('user');
 
         $reports = Report::with('report_type:id,name')
+            ->with('user')
             ->with('reportable')
             ->when($status !== null, function ($query) use ($status) {
                 return $query->where('status', filter_var($status, FILTER_VALIDATE_BOOLEAN) ? 1 : 0);
