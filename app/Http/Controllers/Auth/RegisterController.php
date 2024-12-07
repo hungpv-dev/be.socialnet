@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RegisterRequest;
+use App\Jobs\LogActivityJob;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -27,8 +28,20 @@ class RegisterController extends Controller
         $data = $request->only('email','password','name');
         $data['password'] = Hash::make($request->input('password'));
 
-        User::create($data);
-        
+        $user = User::create($data);
+
+        LogActivityJob::dispatch(
+            'user_account',            // Tên hành động (log name)
+            $user,                     // Causer (người thực hiện hành động)
+            $user,                     // Subject (người bị tác động)
+            [
+                'name' => $user->name,
+                'email' => $user->email,  // Các thuộc tính cần ghi lại
+                'created_at' => now(),    // Thời gian tạo
+            ],
+            "đã tạo một tài khoản." // Nội dung log
+        );
+
         return $this->sendResponse([
             'success' => 'Tạo tài khoản thành công!',
         ],201);
@@ -39,9 +52,9 @@ class RegisterController extends Controller
             return $this->sendResponse(['message'=> 'Đã có lỗi xảy ra!'],404);
         if(!$request->otp)
             return $this->sendResponse(['message' => 'Vui lòng nhập OTP'], 404);
-    
+
         $user = User::where('email', $request->email)->first();
-        
+
         if (!$user) {
             return $this->sendResponse(['message' => 'Không tìm thấy người dùng'], 404);
         }
@@ -62,7 +75,7 @@ class RegisterController extends Controller
         $user->email_verified_at = now();
         $user->is_active = 1;
         $user->save();
-        
+
         Cache::forget('otp_verify_' . $request->email);
 
         return $this->sendResponse(['message' => 'Xác nhận tài khoản thành công!']);
