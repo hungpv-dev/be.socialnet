@@ -53,7 +53,15 @@ class User extends Authenticatable
 
     public function findForPassport($username)
     {
-        return $this->where('email', $username)->orWhere('phone', $username)->first();
+        $user = $this->where('email', $username)
+                 ->orWhere('phone', $username)
+                 ->first();
+    
+        if ($user && $user->is_active == 1) {
+            throw new \Exception('Tài khoản của bạn đã bị khóa!', 403);
+        }
+        
+        return $user;
     }
 
     public function posts()

@@ -245,8 +245,10 @@ class PostController extends Controller
             'user_emotion'
         )
             ->where('user_id', $id)
-            // ->where('type', 'post')
-            ->where('is_active', '1');
+            
+            ->when($id != auth()->user()->id, function ($query) {
+                return $query->where('is_active', '1');
+            });
 
         if (auth()->user()->id == $id)
             $posts = $posts->whereIn('status', ['private', 'public', 'friend']);
