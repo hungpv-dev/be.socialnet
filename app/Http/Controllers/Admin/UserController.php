@@ -10,7 +10,24 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $users = User::paginate(10);
+        $perpage = $request->input('per_page', 10);
+        $sort = $request->input('sort', 'desc');
+        $status = $request->input('status', 2);
+        $isAdmin = $request->input('is_admin', 2);
+        $name = $request->name;
+
+        $users = User::query()
+            ->when($status != 2, function ($query) use ($status) {
+                return $query->where('is_active', $status);
+            })
+            ->when($isAdmin != 2, function ($query) use ($isAdmin) {
+                return $query->where('is_admin', $isAdmin);
+            })
+            ->when(!empty($name), function ($query) use ($name) {
+                return $query->where('name', 'like', '%' . $name . '%');
+            })
+            ->orderBy('created_at', $sort)
+            ->paginate($perpage);
 
         return response()->json($users);
     }
