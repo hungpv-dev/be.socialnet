@@ -22,6 +22,7 @@ use App\Http\Controllers\{
     MessageController,
     StoryController,
     NotificationController,
+    ReportController,
 };
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -141,6 +142,15 @@ Route::middleware(['auth:api'])->group(function () {
     Route::resource('story', StoryController::class);
     Route::resource('blocks', BlockController::class);
     Route::resource('comments', CommentControler::class);
+
+    Route::prefix('reports')->group(function(){
+        Route::get('type', [ReportController::class, 'getReportType']);
+        Route::get('list', [ReportController::class, 'myReport']);
+        Route::get('{id}', [ReportController::class, 'show']);
+        Route::post('add', [ReportController::class, 'add']);
+        Route::delete('{id}/destroy', [ReportController::class,'destroy']);
+    });
+
 });
 
 Route::prefix('admin')->group(function () {

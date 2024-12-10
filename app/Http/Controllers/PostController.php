@@ -82,7 +82,7 @@ class PostController extends Controller
             }
         }
         $post->user_id = $user_id;
-        $post->content = $request->input('content', '');
+        $post->content = $request->input('content', '') ?? '';
         $post->status = $request->input('status', 'public');
         $listFiles = (new FileController($request->file('files')))->posts();
         $post->data = $listFiles;
@@ -160,7 +160,7 @@ class PostController extends Controller
             $this->authorize('update', $post);
 
             // Cập nhật nội dung và trạng thái
-            $post->content = $request->input('content', $post->content);
+            $post->content = $request->input('content', $post->content ?? '') ?? '';
             $post->status = $request->input('status', $post->status);
 
             // Xử lý files
@@ -245,8 +245,10 @@ class PostController extends Controller
             'user_emotion'
         )
             ->where('user_id', $id)
-            // ->where('type', 'post')
-            ->where('is_active', '1');
+            
+            ->when($id != auth()->user()->id, function ($query) {
+                return $query->where('is_active', '1');
+            });
 
         if (auth()->user()->id == $id)
             $posts = $posts->whereIn('status', ['private', 'public', 'friend']);

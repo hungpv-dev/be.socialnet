@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\CommentControler;
-use App\Http\Controllers\Controller;
-use App\Models\Comment;
-use App\Models\Report;
 use App\Models\User;
+use App\Models\Report;
+use App\Models\Comment;
 use App\Models\UserStories;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use App\Http\Controllers\CommentControler;
 use App\Notifications\Report\ApprovedNotification;
 use App\Notifications\Report\DeclinedNotification;
 use App\Notifications\Report\IsReportNotification;
-use Illuminate\Http\Request;
 
 class ReportController extends Controller
 {
