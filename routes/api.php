@@ -153,8 +153,8 @@ Route::middleware(['auth:api'])->group(function () {
 
 });
 
-Route::prefix('admin')->group(function(){
+Route::prefix('admin')->group(function () {
     Route::resource('reports/type', Admin\ReportTypeController::class);
-    Route::resource('reports', Admin\ReportController::class);
+    Route::apiResource('reports', Admin\ReportController::class);
     Route::resource('users', Admin\UserController::class);
 });

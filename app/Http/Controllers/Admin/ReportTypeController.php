@@ -12,19 +12,20 @@ class ReportTypeController extends Controller
 {
     public function index(Request $request)
     {
-        $query = ReportType::query();
+        // $query = ReportType::query();
 
-        if ($request->asc === 'asc') {
-            $query->orderBy('created_at', 'ASC');
-        } elseif ($request->asc === 'desc') {
-            $query->orderBy('created_at', 'DESC');
-        }
+        // if ($request->asc === 'asc') {
+        //     $query->orderBy('created_at', 'ASC');
+        // } elseif ($request->asc === 'desc') {
+        //     $query->orderBy('created_at', 'DESC');
+        // }
 
-        $perPage = $request->perpage ?? 10;
+        // $perPage = $request->perpage ?? 10;
 
-        $type = $query->paginate($perPage);
+        // $type = $query->paginate($perPage);
 
-        return response()->json($type);
+        // return response()->json($type);
+        return response()->json(ReportType::all());
     }
     public function store(Request $request)
     {

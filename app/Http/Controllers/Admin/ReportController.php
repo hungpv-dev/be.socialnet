@@ -26,13 +26,19 @@ class ReportController extends Controller
         $sort = $request->input('sort', 'desc');
         $status = $request->input('status');
         $type = $request->input('type');
+        $reportType = $request->input('report_type');
         $user = $request->input('user');
+
+        $userIds = User::where('name', 'LIKE', '%' . $user . '%')->pluck('id');
 
         $reports = Report::with('report_type:id,name')
             ->with('user')
             ->with('reportable')
-            ->when($status !== null, function ($query) use ($status) {
-                return $query->where('status', filter_var($status, FILTER_VALIDATE_BOOLEAN) ? 1 : 0);
+            ->when($status !== null && $status !== "all", function ($query) use ($status) {
+                return $query->where('status', $status);
+            })
+            ->when($reportType !== null && $reportType != 0, function ($query) use ($reportType) {
+                return $query->where('report_type_id', $reportType);
             })
             ->when($type, function ($query) use ($type) {
                 switch ($type) {
@@ -64,11 +70,12 @@ class ReportController extends Controller
                         return $query;
                 }
             })
-            ->when($user, function ($query) use ($user) {
-                return $query->where('user_id', $user);
+            ->when($userIds->isNotEmpty(), function ($query) use ($userIds) {
+                return $query->whereIn('user_id', $userIds);
             })
             ->orderBy('created_at', $sort)
             ->paginate($paginate);
+
         return response()->json($reports);
     }
 
@@ -90,12 +97,10 @@ class ReportController extends Controller
 
     public function update(Request $request, string $id)
     {
-        //User + Post -> chuyển trạng thái thành khóa
-        //Comment + Story -> Xóa (Message + ChatRoom)
+        if (!$request->status || !in_array($request->status, ['pending', 'approved', 'declined'])) {
+            return response()->json(['message' => "Trạng thái không hợp lệ!"], 400);
+        }
         try {
-            if (!$request->status || !in_array($request->status, ['pending', 'approved', 'declined'])) {
-                return response()->json(['message' => "Trạng thái không hợp lệ!"], 400);
-            }
             $report = Report::findOrFail($id);
             // return response()->json($report->reportable);
 
@@ -138,14 +143,14 @@ class ReportController extends Controller
                 User::find($report->user_id)->notify(new ApprovedNotification($report->id));
                 //Gửi thông báo đến mục tiêu bị tố cáo (Trong switch_case)
 
-                return response()->json(['message' => "Báo cáo đã được phê duyệt!"], 200);
+                return response()->json(['message' => "Báo cáo đã được phê duyệt thành công!"], 200);
             } else if ($request->status == "declined") {
                 $report->status = 'declined';
                 $report->save();
                 //Gửi thông báo tới người tố cáo
                 User::find($report->user_id)->notify(new DeclinedNotification($report->id));
 
-                return response()->json(['message' => "Báo cáo đã bị từ chối!"], 200);
+                return response()->json(['message' => "Báo cáo đã bị từ chối thành công!"], 200);
             }
 
             return response()->json(['message' => "Thao tác xảy ra lỗi!"], 400);
