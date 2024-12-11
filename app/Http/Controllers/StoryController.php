@@ -135,7 +135,7 @@ class StoryController extends Controller
      */
     public function show(string $id)
     {
-        $story = Story::findOrFail($id);
+        $story = Story::whereDate('created_at',date('Y-m-d'))->findOrFail($id);
 
         return $this->sendResponse($story->load('user'));
     }
