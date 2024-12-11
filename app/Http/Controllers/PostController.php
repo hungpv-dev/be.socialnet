@@ -133,7 +133,6 @@ class PostController extends Controller
                 'user_emotion'
             )
                 ->where('id', $id)
-                // ->where('type', 'post')
                 ->firstOrFail();
 
             if (auth()->user()->id == $post->user_id) {

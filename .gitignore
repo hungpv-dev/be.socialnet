@@ -19,5 +19,6 @@ yarn-error.log
 .env
 .docker/data/db/*
 .docker/data/redis/*
+storage/logs/*
 .env
 .env

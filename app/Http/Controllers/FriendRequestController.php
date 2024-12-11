@@ -60,6 +60,7 @@ class FriendRequestController extends Controller
             FriendRequests::create([
                 'sender' => $user->id,
                 'receiver' => $to_user,
+                'created_at' => now(),
             ]);
             $receiverUser->notify(new FriendRequestNotification());
             $receiverUser->follower++;
