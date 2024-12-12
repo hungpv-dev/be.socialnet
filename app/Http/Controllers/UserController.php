@@ -227,7 +227,7 @@ class UserController extends Controller
         $post->status = $request->input('status', 'public');
         $post->type = 'background';
         if (!$request->hasFile('background')) {
-            return $this->sendResponse(['message' => 'Vui lòng tải lên ảnh đại diện!'], 400);
+            return $this->sendResponse(['message' => 'Vui lòng tải lên ảnh bìa!'], 400);
         } else if (!$request->file('background')->isValid() || strpos($request->file('background')->getMimeType(), 'image/') !== 0) {
             return $this->sendResponse(['message' => 'Định dạng không hợp lệ!'], 400);
         }
