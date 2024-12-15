@@ -83,7 +83,10 @@ class UserController extends Controller
                 "đã cập nhật thông tin trang cá nhân"  // Nội dung log
             );
 
-            return $this->sendResponse(['message' => 'Cập nhật thông tin cá nhân thành công']);
+            return $this->sendResponse([
+                'message' => 'Cập nhật thông tin cá nhân thành công',
+                'user' => $user
+            ]);
         }
 
         return $this->sendResponse(['error' => 'Phương thức không được hỗ trợ'], 405);
@@ -154,7 +157,7 @@ class UserController extends Controller
             return $this->sendResponse(['message' => 'Định dạng không hợp lệ!'], 400);
         }
         $path = $request->file('avatar')->store('posts/image', 'public');
-        $fullPath = url('storage/' . $path);
+        $fullPath = custom_url('storage/' . $path);
         $post->data = ['image' => [$fullPath]];
         $post->save();
         $request->user()->avatar = $fullPath;
@@ -232,7 +235,7 @@ class UserController extends Controller
             return $this->sendResponse(['message' => 'Định dạng không hợp lệ!'], 400);
         }
         $path = $request->file('background')->store('posts/image', 'public');
-        $fullPath = url('storage/' . $path);
+        $fullPath = custom_url('storage/' . $path);
         $post->data = ['image' => [$fullPath]];
         $post->save();
         $request->user()->cover_avatar = $fullPath;

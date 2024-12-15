@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
         // $this->call(UserStoriesSeeder::class);
         // $this->call(PostSeeder::class);
         // $this->call(NotificationSeeder::class);
-        // $this->call(ReportTypeSeeder::class);
+        $this->call(ReportTypeSeeder::class);
         // $this->call(ReportSeeder::class);
     }
 }

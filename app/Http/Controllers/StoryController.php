@@ -80,7 +80,7 @@ class StoryController extends Controller
             $file = $request->file('data');
             if ($file) {
                 $filePath = $file->store('public/stories');
-                $path = url(str_replace('public/', 'storage/', $filePath));
+                $path = custom_url(str_replace('public/', 'storage/', $filePath));
                 $mimeType = $file->getMimeType();
                 $type = strpos($mimeType, 'video') === 0 ? 'video' : 'image';
                 $data = [

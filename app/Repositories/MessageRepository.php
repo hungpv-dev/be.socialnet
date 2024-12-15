@@ -57,7 +57,7 @@ class MessageRepository
                     $mimeType = $file->getClientMimeType();
                     if (strpos($mimeType, 'image/') === 0) {
                         $filePath = $file->store('public/messages');
-                        $fileDetails[] = url(str_replace('public/', 'storage/', $filePath));
+                        $fileDetails[] = custom_url(str_replace('public/', 'storage/', $filePath));
                     }
                 }
             }

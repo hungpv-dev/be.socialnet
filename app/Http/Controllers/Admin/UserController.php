@@ -68,10 +68,11 @@ class UserController extends Controller
             $user->is_admin = $isAdmin;
             $user->save();
 
-            return response()->json(['message' => 'Cập nhật tài khoản thành công!'], 200);
         }
-
-        return response()->json(['message' => 'Không có gì thay đổi!'], 200);
+        return response()->json([
+            'user' => $user,
+            'message' => 'Cập nhật tài khoản thành công!'
+        ], 200);
     }
 
     /**

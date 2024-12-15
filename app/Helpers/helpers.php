@@ -29,3 +29,11 @@ function createNofiMessage($roomId, $content){
     $message->is_nofi = true;
     broadcast(new PushMessage($roomId, [new MessageResource($message)]));
 }
+
+if (!function_exists('custom_url')) {
+    function custom_url($path = null, $parameters = [], $secure = null)
+    {
+        $url = url($path, $parameters, $secure);
+        return str_replace('localhost', 'social-net.ddns.net', $url);
+    }
+}
