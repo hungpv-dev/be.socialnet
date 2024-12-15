@@ -24,7 +24,7 @@ class Controller extends BaseController
     // Hàm xóa file khi có file mới được tải lên
     public function deleteFile($url)
     {
-        $filePath = public_path(str_replace(url('storage/'), 'storage/', $url));
+        $filePath = public_path(str_replace(custom_url('storage/'), 'storage/', $url));
         if (file_exists($filePath)) {
             unlink($filePath);
         }

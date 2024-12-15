@@ -65,7 +65,7 @@ class ChatRoomRepository
                 if ($request->has('avatar')) {
                     $avatar = $request->file('avatar');
                     $path = $avatar->store('rooms/avatar', 'public');
-                    $fullPath = url('storage/' . $path);
+                    $fullPath = custom_url('storage/' . $path);
                     $data['avatar'] = $fullPath;
                 }
                 $data['created_at'] = now();
@@ -150,13 +150,13 @@ class ChatRoomRepository
         if ($request->has('avatar')) {
             // Xóa ảnh cũ nếu có
             if ($room->avatar) {
-                $oldPath = str_replace(url('storage/'), '', $room->avatar);
+                $oldPath = str_replace(custom_url('storage/'), '', $room->avatar);
                 Storage::disk('public')->delete($oldPath);
             }
 
             $avatar = $request->file('avatar');
             $path = $avatar->store('rooms/avatar', 'public');
-            $fullPath = url('storage/' . $path);
+            $fullPath = custom_url('storage/' . $path);
             $room->avatar = $fullPath;
             $room->save();
         }

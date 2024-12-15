@@ -27,7 +27,7 @@ class ReportController extends Controller
         $id = $request->id;
         $report = new Report([
             'report_type_id' => $request->report_type,
-            'content' => $request->content,
+            'content' => $request->input('content','') ?? '',
             // 'status' => 'pending',
             'user_id' => auth()->user()->id,
         ]);

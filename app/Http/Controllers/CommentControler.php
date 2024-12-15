@@ -40,10 +40,10 @@ class CommentControler extends Controller
             $mimeType = $file->getMimeType();
             if (strpos($mimeType, 'image/') === 0) {
                 $path = $file->store('comments/images', 'public');
-                $data['image'] = url('storage/' . $path);
+                $data['image'] = custom_url('storage/' . $path);
             } else if (strpos($mimeType, 'video/') === 0) {
                 $path = $file->store('comments/videos', 'public');
-                $data['video'] = url('storage/' . $path);
+                $data['video'] = custom_url('storage/' . $path);
             } else {
                 return response()->json(['message' => 'File phải là hình ảnh hoặc video'], 400);
             }
@@ -113,14 +113,14 @@ class CommentControler extends Controller
                     $this->deleteFile($data['image']);
                 }
                 $path = $file->store('comments/images', 'public');
-                $data['image'] = url('storage/' . $path);
+                $data['image'] = custom_url('storage/' . $path);
             } else if (strpos($mimeType, 'video/') === 0) {
                 // Xóa file cũ nếu có
                 if (isset($data['video'])) {
                     $this->deleteFile($data['video']);
                 }
                 $path = $file->store('comments/videos', 'public');
-                $data['video'] = url('storage/' . $path);
+                $data['video'] = custom_url('storage/' . $path);
             } else {
                 return response()->json(['message' => 'File phải là hình ảnh hoặc video'], 400);
             }
