@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\LogActivityJob;
 use App\Models\Block;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -51,6 +52,12 @@ class BlockController extends Controller
             'user_is_blocked' => $userToBlock->id,
         ]);
 
+        LogActivityJob::dispatch('block', $currentUser, $userToBlock, [
+            'user' => $currentUser->name,
+            'client' => $userToBlock->name,
+            'avatar' => $userToBlock->avatar,
+        ], "đã chặn người dùng");
+
         return $this->sendResponse(['message' => 'Người dùng đã bị chặn thành công.']);
     }
 
@@ -87,6 +94,12 @@ class BlockController extends Controller
         }
 
         $block->delete();
+
+        LogActivityJob::dispatch('block', $currentUser, $userToUnblock, [
+            'user' => $currentUser->name,
+            'client' => $userToUnblock->name,
+            'avatar' => $userToUnblock->avatar,
+        ], "đã bỏ chặn người dùng");
 
         return $this->sendResponse(['message' => 'Bỏ chặn người dùng thành công.']);
     }

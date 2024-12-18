@@ -10,16 +10,14 @@ class ActivityLogController extends Controller
 {
     public function getUserActivityLog(Request $request)
     {
-        $user = $request->user(); // Lấy người dùng hiện tại
+        $user = $request->user();
 
-        // Lấy lịch sử hoạt động của người dùng, giới hạn theo số lượng và sắp xếp theo ngày giảm dần
-        $activities = Activity::where('causer_id', $user->id) // Lọc theo người dùng
-            ->orderByDesc('created_at') // Sắp xếp theo thời gian
+        $activities = Activity::where('causer_id', $user->id)
+            ->orderByDesc('created_at')
             ->skip($request->index)
-            ->take(10) // Giới hạn kết quả trang (10 bản ghi mỗi trang)
+            ->take(10)
             ->get();
 
-        // Trả về kết quả dưới dạng JSON 
         return response()->json($activities);
     }
 }

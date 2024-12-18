@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Jobs\LogActivityJob;
 use App\Models\Comment;
 use App\Models\Post;
 use App\Models\User;
@@ -48,7 +49,7 @@ class CommentControler extends Controller
                 return response()->json(['message' => 'File phải là hình ảnh hoặc video'], 400);
             }
         }
-        $data['text'] = $request->input('text','');
+        $data['text'] = $request->input('text', '');
         $comment = Comment::create([
             'user_id' => $request->user()->id,
             'post_id' => $request->post_id,
@@ -71,8 +72,19 @@ class CommentControler extends Controller
             }
         }
 
+        $user = $request->user();
+        $request->parent_id ? LogActivityJob::dispatch('comment', $user, $post, [
+            'user' => $user->name,
+            'avatar' => $user->avatar,
+            'created_at' => now(),
+        ], "đã bình luận một bài viết.") : LogActivityJob::dispatch('comment', $user, $post, [
+            'user' => $user->name,
+            'avatar' => $user->avatar,
+            'created_at' => now(),
+        ], "đã trả lời một bình luận.");;
+
         return response()->json([
-            'data' => $comment->load(['user:id,name,avatar','parent:id,user_id','parent.user']),
+            'data' => $comment->load(['user:id,name,avatar', 'parent:id,user_id', 'parent.user']),
             'message' => 'Bình luận thành công!'
         ], 201);
     }
@@ -176,23 +188,23 @@ class CommentControler extends Controller
                 return response()->json(['message' => 'Không tìm thấy bài viết!'], 404);
             }
             $commentsQuery = Comment::where('post_id', $request->id)
-            ->whereNull('parent_id');
+                ->whereNull('parent_id');
         } elseif ($type === 'comment') {
             $commentParent = Comment::find($request->id);
             if (!$commentParent) {
                 return response()->json(['message' => 'Không tìm thấy bình luận!'], 404);
             }
-            $commentsQuery = Comment::with(['parent:id,user_id','parent.user'])->where('parent_id', $request->id);
+            $commentsQuery = Comment::with(['parent:id,user_id', 'parent.user'])->where('parent_id', $request->id);
         } else {
             return response()->json(['message' => 'Loại yêu cầu không hợp lệ!'], 400);
         }
 
         $comments = $commentsQuery
-            ->with(['user:id,name,avatar','user_emotion'])
+            ->with(['user:id,name,avatar', 'user_emotion'])
             ->withCount('emotions')
-            ->select(['id', 'content','parent_id','user_id','created_at'])
+            ->select(['id', 'content', 'parent_id', 'user_id', 'created_at'])
             ->selectRaw('(SELECT COUNT(*) FROM comments AS child_comments WHERE child_comments.parent_id = comments.id) AS countChildren')
-            ->orderBy('created_at','desc')
+            ->orderBy('created_at', 'desc')
             ->paginate(5);
 
         return response()->json($comments);

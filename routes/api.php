@@ -31,8 +31,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('auth:api')->get('/user/activity-log', [ActivityLogController::class, 'getUserActivityLog']);
-
 Route::post('register', [RegisterController::class, 'register']);
 Route::post('register/verify', [RegisterController::class, 'verify']);
 
@@ -96,7 +94,7 @@ Route::middleware(['auth:api'])->group(function () {
         Route::delete('/{id}', [MessageController::class, 'destroy']);
     });
 
-
+    Route::get('/user/activity/log', [ActivityLogController::class, 'getUserActivityLog']);
 
     Route::prefix('friend/')->group(function () {
         Route::post('find', [FriendController::class, 'findFriend']);
@@ -157,4 +155,5 @@ Route::prefix('admin')->group(function () {
     Route::resource('reports/type', Admin\ReportTypeController::class);
     Route::apiResource('reports', Admin\ReportController::class);
     Route::resource('users', Admin\UserController::class);
+    Route::get('/activity/log', [Admin\ActivityLogController::class, 'getActivities']);
 });
