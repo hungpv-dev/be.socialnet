@@ -32,8 +32,8 @@ Route::get('/test', function () {
 
 Route::get('/update-ip', function () {
     try {
-        $oldValue = '14.225.208.59'; // Giá trị cần thay thế
-        $newValue = 'localhost';    // Giá trị thay thế
+        $oldValue = 'localhost'; // Giá trị cần thay thế
+        $newValue = '192.168.0.243';    // Giá trị thay thế
         $database = DB::select('SELECT DATABASE() AS db_name')[0]->db_name;
         $tables = DB::select('SHOW TABLES');
         $tableKey = "Tables_in_{$database}";
@@ -90,8 +90,8 @@ Route::get('/update-ip', function () {
 });
 Route::get('/update-json-ip', function () {
     try {
-        $oldValue = '14.225.208.59';
-        $newValue = 'localhost';
+        $oldValue = 'localhost';
+        $newValue = '192.168.0.243';
         $database = DB::select('SELECT DATABASE() AS db_name')[0]->db_name;
         $tables = DB::select('SHOW TABLES');
         $tableKey = "Tables_in_{$database}";

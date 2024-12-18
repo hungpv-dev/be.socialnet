@@ -176,7 +176,8 @@ class UserController extends Controller
         );
 
         return $this->sendResponse([
-            'message' => 'Cập nhật ảnh đại diện thành công!'
+            'message' => 'Cập nhật ảnh đại diện thành công!',
+            'user' => $request->user(),
         ], 200);
     }
     public function listAvatar(Request $request)
