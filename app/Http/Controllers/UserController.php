@@ -78,7 +78,7 @@ class UserController extends Controller
                 [
                     'changes' => $user->getChanges(),  // Chỉ ghi lại các thay đổi
                     'avatar' => $user->avatar,         // Đường dẫn ảnh đại diện (nếu có)
-                    'name' => $user->name,             // Tên người dùng
+                    'user' => $user->name,             // Tên người dùng
                 ],
                 "đã cập nhật thông tin trang cá nhân"  // Nội dung log
             );
