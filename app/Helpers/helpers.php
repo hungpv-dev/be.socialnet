@@ -34,6 +34,6 @@ if (!function_exists('custom_url')) {
     function custom_url($path = null, $parameters = [], $secure = null)
     {
         $url = url($path, $parameters, $secure);
-        return str_replace('localhost', 'social-net.ddns.net', $url);
+        return str_replace('localhost', 'localhost', $url);
     }
 }

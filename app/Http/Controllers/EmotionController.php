@@ -88,6 +88,14 @@ class EmotionController extends Controller
                 'avatar' => $user->avatar,
             ], "đã bày tỏ cảm xúc về một");
             // broadcast(new SendIcon($message->chat_room_id,message: $message));
+            if($type == 'post'){
+                $model->load(
+                    'post_share',
+                    'post_share.user:id,name,avatar',
+                    'user:id,name,avatar',
+                    'user_emotion'
+                );
+            }
             return $this->sendResponse([
                 'post' => $model,
                 'message' => 'Thêm icon thành công!'

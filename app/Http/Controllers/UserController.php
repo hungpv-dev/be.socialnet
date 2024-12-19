@@ -7,6 +7,7 @@ use App\Models\Friend;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Jobs\LogActivityJob;
+use App\Models\Block;
 use App\Models\Post;
 use Illuminate\Support\Facades\Validator;
 
@@ -29,12 +30,23 @@ class UserController extends Controller
             ->whereNull('deleted_at')
             ->first();
 
+        
+
         if (!$user) {
             return $this->sendResponse(['message' => 'Không tìm thấy tài khoản!'], 404);
         }
 
         $user->friend_commons = $this->friendController->findCommonFriends(auth()->user()->id, $user->id);
         $user->button = $this->friendController->checkFriendStatus($user->id);
+
+        $user->block = false;
+        if(Block::where('user_block',$request->user()->id)->where('user_is_blocked',$request->id)->exists()){
+            $user->block = true;
+        }
+        if(Block::where('user_block',$request->id)->where('user_is_blocked',operator: $request->user()->id)->exists()){
+            return $this->sendResponse([],404);
+        }
+
 
         return $this->sendResponse($user);
     }
@@ -176,7 +188,8 @@ class UserController extends Controller
         );
 
         return $this->sendResponse([
-            'message' => 'Cập nhật ảnh đại diện thành công!'
+            'message' => 'Cập nhật ảnh đại diện thành công!',
+            'user' => $request->user(),
         ], 200);
     }
     public function listAvatar(Request $request)
