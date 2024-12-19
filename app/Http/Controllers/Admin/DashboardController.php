@@ -30,29 +30,17 @@ class DashboardController extends Controller
 
     $dates = collect();
     switch ($timeFilter) {
-        case '7_days':
-            for ($i = 0; $i <= $startDate->diffInDays(Carbon::now()); $i++) {
-                $dates->push(Carbon::now()->subDays($i)->format('Y-m-d'));
-            }
-            break;
-
         case '30_days':
         case '3_months':
-            for ($i = 0; $i <= $startDate->diffInDays(Carbon::now()); $i += 7) {
+        case '6_months':
+        case '1_year':
+        case '7_days':
+            for ($i = $startDate->diffInDays(Carbon::now()); $i >= 0; $i--) {
                 $dates->push(Carbon::now()->subDays($i)->format('Y-m-d'));
             }
             break;
-
-        case '6_months':
-        case '1_year':
-            $startMonth = Carbon::parse($startDate)->startOfMonth();
-            for ($i = 0; $i <= $startMonth->diffInMonths(Carbon::now()); $i++) {
-                $dates->push($startMonth->copy()->addMonths($i)->format('Y-m'));
-            }
-            break;
-
         default:
-            for ($i = 0; $i <= $startDate->diffInDays(Carbon::now()); $i++) {
+            for ($i = $startDate->diffInDays(Carbon::now()); $i > 0; $i--) {
                 $dates->push(Carbon::now()->subDays($i)->format('Y-m-d'));
             }
             break;
