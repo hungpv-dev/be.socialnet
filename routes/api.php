@@ -141,17 +141,17 @@ Route::middleware(['auth:api'])->group(function () {
     Route::resource('blocks', BlockController::class);
     Route::resource('comments', CommentControler::class);
 
-    Route::prefix('reports')->group(function(){
+    Route::prefix('reports')->group(function () {
         Route::get('type', [ReportController::class, 'getReportType']);
         Route::get('list', [ReportController::class, 'myReport']);
         Route::get('{id}', [ReportController::class, 'show']);
         Route::post('add', [ReportController::class, 'add']);
-        Route::delete('{id}/destroy', [ReportController::class,'destroy']);
+        Route::delete('{id}/destroy', [ReportController::class, 'destroy']);
     });
-
 });
 
 Route::prefix('admin')->group(function () {
+    Route::get('/', [Admin\DashboardController::class, 'getStatistics']);
     Route::resource('reports/type', Admin\ReportTypeController::class);
     Route::apiResource('reports', Admin\ReportController::class);
     Route::resource('users', Admin\UserController::class);
