@@ -10,7 +10,9 @@ use App\Models\UserStories;
 use App\Notifications\Story\CreateNotification;
 use Illuminate\Http\Request;
 use App\Notifications\Story\EmotionNotification;
+use Exception;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class StoryController extends Controller
@@ -182,7 +184,15 @@ class StoryController extends Controller
             return $this->sendResponse(['message' => 'Bạn không có quyền xóa tin này'], 403);
         }
 
-        $story->delete();
+        try{
+            DB::beginTransaction();
+            UserStories::where('story_id', $story->id)->delete();
+            $story->delete();
+            DB::commit();
+        }catch(Exception $e){
+            DB::rollBack();
+            return $this->sendResponse(['message' => 'Đã xảy ra lỗi, vui lòng thử lại sau'], 500);
+        }
 
         return $this->sendResponse(['message' => 'Xóa tin thành công'], 200);
     }
