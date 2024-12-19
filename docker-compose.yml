@@ -88,6 +88,20 @@ services:
       - 6379:6379
     networks:
       - socielnet
+    
+  horizon:
+    image: server
+    container_name: horizon
+    restart: unless-stopped
+    depends_on:
+      - server
+      - redis
+    working_dir: /var/www
+    command: php artisan horizon
+    volumes:
+      - ./:/var/www
+    networks:
+      - socielnet
 
 networks:
   socielnet: 
