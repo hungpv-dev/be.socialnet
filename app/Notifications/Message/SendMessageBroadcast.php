@@ -35,9 +35,11 @@ class SendMessageBroadcast extends Notification implements ShouldQueue
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
         $messageType = !empty($this->message->files) ? 'đã gửi hình ảnh' : ': ' . ($this->message ? $this->message->body : '');
-        
+
+        $name = optional($this->room)->name['user_' . $this->user_id] ?? '';
+
         return new BroadcastMessage([
-            'notification' => $this->room->name['user_' . $this->user_id] . ' ' . $messageType,
+            'notification' => $name . ' ' . $messageType,
             'time' => now()->format('H:i d/m/Y'),
             'room_id' => $this->room->id
         ]);
